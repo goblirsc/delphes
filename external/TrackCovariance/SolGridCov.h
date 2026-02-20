@@ -42,7 +42,7 @@ public:
 	Bool_t IsAccepted(Double_t pt, Double_t Theta);			// From pt (GeV) and theta (degrees)
 	Bool_t IsAccepted(Double_t *p);					// From momentum components (GeV)
 	Bool_t IsAccepted(TVector3 p);					// As above in Vector3 format
-	Bool_t IsAccepted(TVector3 x, TVector3 p, SolGeom *G);		// As above checking track origin
+	Bool_t IsAccepted(TVector3 x, TVector3 p, SolGeom *G, const TVector3 & dec = {0,0,0});		// As above checking track origin
 
 };
 

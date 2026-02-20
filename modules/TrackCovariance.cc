@@ -135,12 +135,14 @@ void TrackCovariance::Process()
 
     // converting to meters
     const TLorentzVector &candidatePosition = particle->Position*1e-03;
+    const TLorentzVector & decayPos = particle->DecayPosition*1e-03; 
+
     const TLorentzVector &candidateMomentum = particle->Momentum;
 
     Bool_t inside = TrkUtil::IsInside(candidatePosition.Vect(), Rin, ZinNeg, ZinPos); // Check if in inner box
     Bool_t Accept = kTRUE;
-    if(inside) Accept = fCovariance->IsAccepted(candidateMomentum.Vect());
-    else       Accept = fCovariance->IsAccepted(candidatePosition.Vect(),candidateMomentum.Vect(), fGeometry);
+    if(decayPos.Mag() < 1e-6 && inside) Accept = fCovariance->IsAccepted(candidateMomentum.Vect());
+    else       Accept = fCovariance->IsAccepted(candidatePosition.Vect(),candidateMomentum.Vect(), fGeometry, decayPos.Vect());
     if(!Accept) continue;
 
     mass = candidateMomentum.M();

@@ -167,12 +167,14 @@ Int_t SolTrack::nHit()
 }
 //
 // # of measurement layers hit
-Int_t SolTrack::nmHit()
+Int_t SolTrack::nmHit(double rmax, double zmax)
 {
 	Int_t kmh = 0;
 	Double_t R; Double_t phi; Double_t zz;
 	for (Int_t i = 0; i < fG->Nl(); i++)
-	if (HitLayer(i, R, phi, zz))if (fG->isMeasure(i))kmh++;
+	if (HitLayer(i, R, phi, zz)){
+		if (fG->isMeasure(i) && (rmax < 1e-6 || (R < rmax && std::abs(zz)<zmax)))kmh++;
+	}
 	//
 	return kmh;
 }

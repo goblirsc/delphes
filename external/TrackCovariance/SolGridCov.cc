@@ -106,7 +106,7 @@ Bool_t SolGridCov::IsAccepted(TVector3 p)
 //
 // Detailed acceptance check
 //
-Bool_t SolGridCov::IsAccepted(TVector3 x, TVector3 p, SolGeom* G)
+Bool_t SolGridCov::IsAccepted(TVector3 x, TVector3 p, SolGeom* G, const TVector3 & dec)
 {
 	Bool_t Accept = kFALSE;
 	//
@@ -115,12 +115,13 @@ Bool_t SolGridCov::IsAccepted(TVector3 x, TVector3 p, SolGeom* G)
 	Double_t Rin = G->GetRmin();
 	Double_t ZinPos = G->GetZminPos();
 	Double_t ZinNeg = G->GetZminNeg();
-	Bool_t inside = TrkUtil::IsInside(x, Rin, ZinNeg, ZinPos); // Check if in inner box
+  bool hasDecay = dec.Mag() > 1e-6; // null vector indicates a stable particle
+	Bool_t inside = !hasDecay && TrkUtil::IsInside(x, Rin, ZinNeg, ZinPos); // Check if in inner box
 	if (inside) Accept = IsAccepted(p);
 	else
 	{
 		SolTrack* trk = new SolTrack(x, p, G);
-		if (trk->nmHit() >= fNminHits)Accept = kTRUE;
+		if (trk->nmHit(dec.Perp(), std::abs(dec.Z())) >= fNminHits)Accept = kTRUE;
 		delete trk;
 	}
 	//
