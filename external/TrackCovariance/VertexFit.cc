@@ -137,9 +137,6 @@ VertexFit::~VertexFit()
 	fcovXv.Clear();		
 	fChi2List.Clear();
 	//
-	if (fPar.size() != fNtr || fParNew.size() != fNtr || fCov.size() != fNtr || fCovNew.size() != fNtr){
-		std::cerr << " Missing deletes " << std::endl; 
-	}
 	for (Int_t i = 0; i < fNtr; i++)
 	{
 		fPar[i]->Clear();	delete fPar[i];

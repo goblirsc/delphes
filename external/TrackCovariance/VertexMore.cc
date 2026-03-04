@@ -68,7 +68,6 @@ VertexMore::VertexMore(VertexFit* V, Bool_t opt)
 // Destructor
 VertexMore::~VertexMore()
 {
-	if (fpi.size() != fNtr) std::cout << " fpi has size "<<fpi.size()<<" and fNtr is "<<fNtr<<std::endl; 
 	for (Int_t i = 0; i < fNtr; i++) {
 		fpi[i]->Clear();	
 		fCpi[i]->Clear();	
