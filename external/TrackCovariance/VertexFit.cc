@@ -137,6 +137,9 @@ VertexFit::~VertexFit()
 	fcovXv.Clear();		
 	fChi2List.Clear();
 	//
+	if (fPar.size() != fNtr || fParNew.size() != fNtr || fCov.size() != fNtr || fCovNew.size() != fNtr){
+		std::cerr << " Missing deletes " << std::endl; 
+	}
 	for (Int_t i = 0; i < fNtr; i++)
 	{
 		fPar[i]->Clear();	delete fPar[i];
@@ -431,10 +434,10 @@ void  VertexFit::VertexFitter()
 			TVectorD b = (*fWi[i]) * (x - *fx0i[i] + *fdi[i]);
 			ffi[i] += Dot(a, b) / fa2i[i];
 			TVectorD newPar = *fPar[i] - ((*fCov[i]) * (*fAti[i])) * lambda;
-                        if ( fParNew[i] ) delete fParNew[i];
+			if ( fParNew[i] ) delete fParNew[i];
 			fParNew[i] = new TVectorD(newPar);
 			TMatrixDSym newCov = GetNewCov(i);
-                        if ( fCovNew[i] ) delete fCovNew[i];
+			if ( fCovNew[i] ) delete fCovNew[i];
 			fCovNew[i] = new TMatrixDSym(newCov);
 		}
 		// Add external constraint to Chi2
@@ -729,9 +732,13 @@ void VertexFit::RemoveTrk(Int_t iTrk)	// Remove iTrk track
 	fNtr--;
 	fChi2List.Clear();
 	fChi2List.ResizeTo(fNtr);		// Resize chi2 array
+	if (fPar[iTrk]) delete fPar[iTrk]; 
 	fPar.erase(fPar.begin() + iTrk);		// Remove track
+	if (fCov[iTrk]) delete fCov[iTrk]; 
 	fCov.erase(fCov.begin() + iTrk);
+	if (fParNew[iTrk]) delete fParNew[iTrk]; 
 	fParNew.erase(fParNew.begin() + iTrk);		// Remove track
+	if (fCovNew[iTrk]) delete fCovNew[iTrk]; 
 	fCovNew.erase(fCovNew.begin() + iTrk);
 	fCharged.erase(fCharged.begin() + iTrk);
 	//
