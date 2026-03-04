@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5...4.0)
 
 project(Delphes)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_options(-fPIC -Wall -D_FILE_OFFSET_BITS=64 -DDROP_CGAL)
 
