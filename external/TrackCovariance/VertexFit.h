@@ -7,10 +7,12 @@
 #include <TMatrixDSym.h>
 #include "TrkUtil.h"
 #include "ObsTrk.h"
+#include <memory>
 #include <vector>
 #include <iostream>
 //
 // Class for vertex fitting
+
 
 class VertexFit: public TrkUtil
 {
@@ -41,6 +43,13 @@ private:
 	TMatrixDSym fcovXv;			// Vertex covariance
 	Double_t fChi2;				// Vertex fit Chi2
 	TVectorD fChi2List;			// List of Chi2 contributions
+
+	std::unique_ptr<TMatrixDSym> fCachedDm1 = nullptr; 
+	const TMatrixDSym & getDm1(); 
+
+	std::map<std::pair<int,int>, TVectorD> fCacheDsiDa0k; 
+	std::map<std::pair<int,int>, TMatrixD> fCacheDaiDa0k; 
+	
 	//
 	// Work arrays
 	std::vector<Double_t> ffi;			// Fit phases

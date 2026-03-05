@@ -126,7 +126,21 @@ void VertexFit::ResetWrkArrays()
 		fDi.clear();
 		fWi.clear();
 		fWinvi.clear();
+		fCachedDm1.reset(); 
+		fCacheDsiDa0k.clear(); 
+		fCacheDaiDa0k.clear(); 
 	}
+}
+const TMatrixDSym & VertexFit::getDm1(){
+	if (!fCachedDm1){
+		TMatrixDSym D(3);	
+		D.Zero();
+		for (Int_t k = 0; k < fNtr; k++) D += *fDi[k];
+		// if vertex constraint
+		if(fVtxCst) D += fCovCstInv;
+		fCachedDm1.reset(dynamic_cast<TMatrixDSym*>(RegInv(D).Clone()));
+	}
+	return *fCachedDm1; 
 }
 VertexFit::~VertexFit()
 {	
@@ -494,19 +508,17 @@ TVectorD VertexFit::GetVtxChi2List()
 //
 TVectorD VertexFit::DsiDa0k(Int_t i, Int_t k)
 {
+	auto found = fCacheDsiDa0k.find({i,k}); 
+	if (found != fCacheDsiDa0k.end()){
+		return found->second; 
+	}
 	// Unit 3x3 matrix
 	TMatrixD M3(3, 3);
 	TMatrixD Ui3(TMatrixD::kUnit, M3);
 	if(i != k) Ui3.Zero();	
 	//
 	// Initialize D^{-1}
-	TMatrixDSym D(3);	D.Zero();
-	TMatrixDSym Dm1(3);
-	for (Int_t k = 0; k < fNtr; k++) D += *fDi[k];
-	// 
-	// if vertex constraint
-	if(fVtxCst) D += fCovCstInv;
-	Dm1 = RegInv(D);
+	const TMatrixDSym & Dm1 = getDm1(); 
 	// Other input variables
 	TVectorD ai   = *fai[i];
 	Double_t a2i  = fa2i[i];
@@ -518,23 +530,22 @@ TVectorD VertexFit::DsiDa0k(Int_t i, Int_t k)
 	TVectorD Sik = T*ai;
 	Sik *= 1./a2i;
 	//
+	fCacheDsiDa0k.emplace(std::make_pair(i,k),Sik); 
 	return Sik;
 }
 //
 // Correlation matrix of new track parameters
 TMatrixD VertexFit::DaiDa0k(Int_t i, Int_t k)
 {
-	TMatrixD M3(3, 3);
-	TMatrixD M5(5, 5);
+	auto found = fCacheDaiDa0k.find({i,k}); 
+	if (found != fCacheDaiDa0k.end()){
+		return found->second; 
+	}
+	static const TMatrixD M3(3, 3);
+	static const TMatrixD M5(5, 5);
 	//
 	// Initialize D^{-1}
-	TMatrixDSym D(3);	D.Zero();
-	TMatrixDSym Dm1(3);
-	for (Int_t k = 0; k < fNtr; k++) D += *fDi[k];
-	// 
-	// if vertex constraint
-	if(fVtxCst) D += fCovCstInv;
-	Dm1 = RegInv(D);
+	const TMatrixDSym & Dm1 = getDm1(); 
 	// Other useful matrices
 	TMatrixD Ait = *fAti[i];
 	TMatrixD Ai(TMatrixD::kTransposed, Ait);
@@ -552,7 +563,8 @@ TMatrixD VertexFit::DaiDa0k(Int_t i, Int_t k)
 	TMatrixD Mik = Ait * (Mi0 * Ak);
 	TMatrixD Mi = Ui5 - (*fCov[i]) * Mik;
 	//
-	return Mi;
+	auto empl = fCacheDaiDa0k.emplace(std::make_pair(i,k),Ui5 - (*fCov[i]) * Mik); 
+	return empl.first->second;
 }
 TMatrixD VertexFit::GetNewCov(Int_t i, Int_t j)
 {
@@ -561,7 +573,7 @@ TMatrixD VertexFit::GetNewCov(Int_t i, Int_t j)
 	// Main computation
 	for(Int_t k=0; k<fNtr; k++){
 		TMatrixD Mi = DaiDa0k(i, k);
-		TMatrixD Mj = DaiDa0k(j, k);
+		TMatrixD Mj = (i == j ? Mi : DaiDa0k(j, k));
 		TMatrixD Mjt(TMatrixD::kTransposed,Mj);
 		Cij += Mi*((*fCov[k])*Mjt);
 	}
@@ -570,11 +582,7 @@ TMatrixD VertexFit::GetNewCov(Int_t i, Int_t j)
 	if(fVtxCst){
 		//
 		// Initialize D^{-1}
-		TMatrixDSym D(3);	D.Zero();
-		TMatrixDSym Dm1(3);
-		for (Int_t k = 0; k < fNtr; k++) D += *fDi[k];
-		D += fCovCstInv;
-		Dm1 = RegInv(D);
+		const TMatrixDSym & Dm1 = getDm1(); 
 		TMatrixD Fi = (*fCov[i])*((*fAti[i])*((*fDi[i])*Dm1));
 		TMatrixD Fj = (*fCov[j])*((*fAti[j])*((*fDi[j])*Dm1));
 		TMatrixD Fjt(TMatrixD::kTransposed,Fj);
@@ -604,11 +612,7 @@ TMatrixD VertexFit::GetNewCovXvPar(Int_t i)
 	TMatrixD M5(5,5);
 	//
 	// Initialize D^{-1}
-	TMatrixDSym D(3);	D.Zero();
-	TMatrixDSym Dm1(3);
-	for(Int_t k=0; k<fNtr; k++) D += *fDi[k];
-	if(fVtxCst) D += fCovCstInv;
-	Dm1 = RegInv(D);
+	const TMatrixDSym & Dm1 = getDm1(); 
 	// Other useful matrices
 	//
 	// Main computation
@@ -629,17 +633,17 @@ TMatrixD VertexFit::GetNewCovXvPar(Int_t i)
 		TMatrixD Mit(TMatrixD::kTransposed,Mi);
 		Cxp += (*fDi[k])*(Ak*((*fCov[k])*Mit));
 */
-	TMatrixD Mik = DaiDa0k(i, k);
-	TMatrixD Mikt(TMatrixD::kTransposed, Mik);
-	//std::cout<<"Mikt:"; Mikt.Print();
-	TMatrixD Akt = *fAti[i];
-	TMatrixD Ak(TMatrixD::kTransposed,Akt);
-	//std::cout<<"Ak:"; Ak.Print();
-	TMatrixDSym C0k = *fCov[k];
-	//Cxp += (*fDi[k])*(Ak*(C0k*Mikt));
-	TMatrixD XvAlf0k = GetDxvDpar0(k);
-	Cxp += XvAlf0k*(C0k*Mikt);
-	//std::cout<<"Cxp:"; Cxp.Print();
+		TMatrixD Mik = DaiDa0k(i, k);
+		TMatrixD Mikt(TMatrixD::kTransposed, Mik);
+		//std::cout<<"Mikt:"; Mikt.Print();
+		TMatrixD Akt = *fAti[i];
+		TMatrixD Ak(TMatrixD::kTransposed,Akt);
+		//std::cout<<"Ak:"; Ak.Print();
+		TMatrixDSym C0k = *fCov[k];
+		//Cxp += (*fDi[k])*(Ak*(C0k*Mikt));
+		TMatrixD XvAlf0k = GetDxvDpar0(k);
+		Cxp += XvAlf0k*(C0k*Mikt);
+		//std::cout<<"Cxp:"; Cxp.Print();
 	}
 	//
 	if(fVtxCst){
@@ -657,11 +661,7 @@ TMatrixD VertexFit::GetDxvDpar0(Int_t i)
 	TMatrixD dXvDa0(3, 5); dXvDa0.Zero();	// Return matrix
 	//
 	// Initialize D^{-1}
-	TMatrixDSym D(3);	D.Zero();
-	TMatrixDSym Dm1(3);
-	for (Int_t k = 0; k < fNtr; k++) D += *fDi[k];
-	if(fVtxCst) D += fCovCstInv;
-	Dm1 = RegInv(D);
+	const TMatrixDSym & Dm1 = getDm1(); 
 	//
 	// Other useful matrix
 	TMatrixD Ait = *fAti[i];
