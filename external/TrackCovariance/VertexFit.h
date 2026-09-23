@@ -90,9 +90,8 @@ public:
 	TMatrixDSym GetNewCov(Int_t i);		// Updated parameter covariance <par_i*par_i>
 	Double_t GetPhase(Int_t i) { return ffi[i]; };
 	TMatrixD GetDxvDpar0(Int_t i) ;		// X_i = dXv/dStartPar(i)
-	const TMatrixD & DaiDa0k(Int_t i, Int_t k);	// 
+	const TMatrixD & DaiDa0k(Int_t i, Int_t k); //	M^i_k: Derivative of final track parameters wrt initial
 	TVectorD DsiDa0k(Int_t i, Int_t k);	// S^i_k: Derivative of phase wrt initial track parameters
-	TMatrixD GetDxvDpar0(Int_t i) ;		// dXv/dStartPar(i)
 	//
 	// Handle tracks/constraints
 	void AddVtxConstraint(TVectorD xv, TMatrixDSym cov);	// Add gaussian vertex constraint
