@@ -29,6 +29,8 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TIterator;
 class TObjArray;
 class H_BeamLine;
@@ -51,13 +53,13 @@ private:
   Double_t fSigmaE, fSigmaX, fSigmaY, fSigmaT;
   Double_t fEtaMin;
 
-  H_BeamLine *fBeamLine;
+  std::unique_ptr<H_BeamLine> fBeamLine; //!
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(Hector, 1)
 };

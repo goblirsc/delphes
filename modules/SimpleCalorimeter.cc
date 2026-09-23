@@ -46,6 +46,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -53,24 +54,18 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-SimpleCalorimeter::SimpleCalorimeter() :
-  fResolutionFormula(0),
-  fItParticleInputArray(0), fItTrackInputArray(0)
+SimpleCalorimeter::SimpleCalorimeter()
 {
 
-  fResolutionFormula = new DelphesFormula;
-  fTowerTrackArray = new TObjArray;
-  fItTowerTrackArray = fTowerTrackArray->MakeIterator();
+  fResolutionFormula = make_unique<DelphesFormula>();
+  fTowerTrackArray = make_unique<TObjArray>();
+  fItTowerTrackArray.reset(fTowerTrackArray->MakeIterator());
 }
 
 //------------------------------------------------------------------------------
 
 SimpleCalorimeter::~SimpleCalorimeter()
 {
-
-  if(fResolutionFormula) delete fResolutionFormula;
-  if(fTowerTrackArray) delete fTowerTrackArray;
-  if(fItTowerTrackArray) delete fItTowerTrackArray;
 }
 
 //------------------------------------------------------------------------------
@@ -97,11 +92,25 @@ void SimpleCalorimeter::Init()
     paramPhiBins = param[i * 2 + 1];
     sizePhiBins = paramPhiBins.GetSize();
 
-    for(j = 0; j < sizeEtaBins; ++j)
+    if(sizePhiBins == 1)
     {
-      for(k = 0; k < sizePhiBins; ++k)
+      sizePhiBins = paramPhiBins.GetInt() / 2;
+      for(j = 0; j < sizeEtaBins; ++j)
       {
-        fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        for(k = -sizePhiBins; k <= sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(TMath::Pi() * k / sizePhiBins);
+        }
+      }
+    }
+    else
+    {
+      for(j = 0; j < sizeEtaBins; ++j)
+      {
+        for(k = 0; k < sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        }
       }
     }
   }
@@ -111,8 +120,8 @@ void SimpleCalorimeter::Init()
   for(itEtaBin = fBinMap.begin(); itEtaBin != fBinMap.end(); ++itEtaBin)
   {
     fEtaBins.push_back(itEtaBin->first);
-    phiBins = new vector<double>(itEtaBin->second.size());
-    fPhiBins.push_back(phiBins);
+    fPhiBins.push_back(make_unique<vector<double> >(itEtaBin->second.size()));
+    phiBins = fPhiBins.back().get();
     phiBins->clear();
     for(itPhiBin = itEtaBin->second.begin(); itPhiBin != itEtaBin->second.end(); ++itPhiBin)
     {
@@ -142,7 +151,7 @@ void SimpleCalorimeter::Init()
     Short_t etaBinIndex = static_cast<Short_t>(std::distance(fEtaBins.begin(), itEta));
 
     // Find closest phi bin index (using bin centers)
-    std::vector<double> *phiVec = fPhiBins[etaBinIndex];
+    vector<double> *phiVec = fPhiBins[etaBinIndex].get();
     if(!phiVec || phiVec->empty()) continue;
 
     auto itPhi = std::min_element(phiVec->begin(), phiVec->end(), [phiEdge](double a, double b) { return std::abs(a - phiEdge) < std::abs(b - phiEdge); });
@@ -184,10 +193,10 @@ void SimpleCalorimeter::Init()
 
   // import array with output from other modules
   fParticleInputArray = ImportArray(GetString("ParticleInputArray", "ParticlePropagator/particles"));
-  fItParticleInputArray = fParticleInputArray->MakeIterator();
+  fItParticleInputArray.reset(fParticleInputArray->MakeIterator());
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "ParticlePropagator/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   // create output arrays
   fTowerOutputArray = ExportArray(GetString("TowerOutputArray", "towers"));
@@ -200,13 +209,6 @@ void SimpleCalorimeter::Init()
 
 void SimpleCalorimeter::Finish()
 {
-  vector<vector<Double_t> *>::iterator itPhiBin;
-  if(fItParticleInputArray) delete fItParticleInputArray;
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  for(itPhiBin = fPhiBins.begin(); itPhiBin != fPhiBins.end(); ++itPhiBin)
-  {
-    delete *itPhiBin;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -271,7 +273,7 @@ void SimpleCalorimeter::Process()
     etaBin = distance(fEtaBins.begin(), itEtaBin);
 
     // phi bins for given eta bin
-    phiBins = fPhiBins[etaBin];
+    phiBins = fPhiBins[etaBin].get();
 
     // find phi bin [1, phiBins.size - 1]
     itPhiBin = lower_bound(phiBins->begin(), phiBins->end(), particlePosition.Phi());
@@ -319,7 +321,7 @@ void SimpleCalorimeter::Process()
     etaBin = distance(fEtaBins.begin(), itEtaBin);
 
     // phi bins for given eta bin
-    phiBins = fPhiBins[etaBin];
+    phiBins = fPhiBins[etaBin].get();
 
     // find phi bin [1, phiBins.size - 1]
     itPhiBin = lower_bound(phiBins->begin(), phiBins->end(), trackPosition.Phi());
@@ -374,7 +376,7 @@ void SimpleCalorimeter::Process()
       }
 
       // phi bins for given eta bin
-      phiBins = fPhiBins[etaBin];
+      phiBins = fPhiBins[etaBin].get();
 
       // calculate eta and phi of the tower's center
       fTowerEta = 0.5 * (fEtaBins[etaBin - 1] + fEtaBins[etaBin]);
@@ -445,24 +447,6 @@ void SimpleCalorimeter::Process()
       }
       continue;
     }
-    else
-    {
-
-      particle = static_cast<Candidate *>(fParticleInputArray->At(number));
-      momentum = particle->Momentum;
-
-      energy = momentum.E() * fTrackFractions[number];
-
-      if(fTrackFractions[number] > 1.0E-9)
-      {
-        // compute total neutral energy
-        fNeutralEnergy += energy;
-        if(particle->IsPU) fNeutralEnergyFromPU += energy;
-      }
-    }
-
-    // fill current tower
-    energy = momentum.E() * fTowerFractions[number];
 
     // check for photon and electron hits in current tower
     if(flags & 2) ++fTowerPhotonHits;
@@ -473,6 +457,14 @@ void SimpleCalorimeter::Process()
 
     // fill current tower
     energy = momentum.E() * fTowerFractions[number];
+
+    if(!(flags & 1))
+    {
+      // compute total neutral energy
+      fNeutralEnergy += energy;
+      if(particle->IsPU) fNeutralEnergyFromPU += energy;
+    }
+
     if(fTower) // add only if tower exists
     {
       fTowerEnergy += energy;

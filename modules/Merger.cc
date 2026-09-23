@@ -47,6 +47,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 
 using namespace std;
 
@@ -71,15 +72,17 @@ void Merger::Init()
   ExRootConfParam param = GetParam("InputArray");
   Long_t i, size;
   const TObjArray *array;
-  TIterator *iterator;
+  unique_ptr<TIterator> iterator;
 
   size = param.GetSize();
+
+  fInputList.clear();
   for(i = 0; i < size; ++i)
   {
     array = ImportArray(param[i].GetString());
-    iterator = array->MakeIterator();
+    iterator.reset(array->MakeIterator());
 
-    fInputList.push_back(iterator);
+    fInputList.push_back(move(iterator));
   }
 
   // create output arrays
@@ -95,14 +98,6 @@ void Merger::Init()
 
 void Merger::Finish()
 {
-  vector<TIterator *>::iterator itInputList;
-  TIterator *iterator;
-
-  for(itInputList = fInputList.begin(); itInputList != fInputList.end(); ++itInputList)
-  {
-    iterator = *itInputList;
-    if(iterator) delete iterator;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +107,7 @@ void Merger::Process()
   Candidate *candidate;
   TLorentzVector momentum;
   Double_t sumPT, sumE;
-  vector<TIterator *>::iterator itInputList;
+  vector<unique_ptr<TIterator> >::iterator itInputList;
   TIterator *iterator;
 
   DelphesFactory *factory = GetFactory();
@@ -124,7 +119,7 @@ void Merger::Process()
   // loop over all input arrays
   for(itInputList = fInputList.begin(); itInputList != fInputList.end(); ++itInputList)
   {
-    iterator = *itInputList;
+    iterator = itInputList->get();
 
     // loop over all candidates
     iterator->Reset();

@@ -37,6 +37,7 @@
 #include "classes/DelphesModule.h"
 
 #include <deque>
+#include <memory>
 
 class TObjArray;
 
@@ -51,12 +52,11 @@ public:
   void Finish();
 
 private:
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  TIterator *fItInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  const TObjArray *fInputArray; //!
-
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(DecayFilter, 1)
 };

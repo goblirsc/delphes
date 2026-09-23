@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -39,49 +40,28 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-OldCalorimeter::OldCalorimeter() :
-  fECalResolutionFormula(0), fHCalResolutionFormula(0),
-  fItParticleInputArray(0), fItTrackInputArray(0),
-  fTowerECalArray(0), fItTowerECalArray(0),
-  fTowerHCalArray(0), fItTowerHCalArray(0),
-  fTowerTrackArray(0), fItTowerTrackArray(0),
-  fTowerECalTrackArray(0), fItTowerECalTrackArray(0),
-  fTowerHCalTrackArray(0), fItTowerHCalTrackArray(0)
+OldCalorimeter::OldCalorimeter()
 {
-  fECalResolutionFormula = new DelphesFormula;
-  fHCalResolutionFormula = new DelphesFormula;
+  fECalResolutionFormula = make_unique<DelphesFormula>();
+  fHCalResolutionFormula = make_unique<DelphesFormula>();
 
-  fTowerECalArray = new TObjArray;
-  fItTowerECalArray = fTowerECalArray->MakeIterator();
-  fTowerHCalArray = new TObjArray;
-  fItTowerHCalArray = fTowerHCalArray->MakeIterator();
+  fTowerECalArray = make_unique<TObjArray>();
+  fItTowerECalArray.reset(fTowerECalArray->MakeIterator());
+  fTowerHCalArray = make_unique<TObjArray>();
+  fItTowerHCalArray.reset(fTowerHCalArray->MakeIterator());
 
-  fTowerTrackArray = new TObjArray;
-  fItTowerTrackArray = fTowerTrackArray->MakeIterator();
-  fTowerECalTrackArray = new TObjArray;
-  fItTowerECalTrackArray = fTowerECalTrackArray->MakeIterator();
-  fTowerHCalTrackArray = new TObjArray;
-  fItTowerHCalTrackArray = fTowerHCalTrackArray->MakeIterator();
+  fTowerTrackArray = make_unique<TObjArray>();
+  fItTowerTrackArray.reset(fTowerTrackArray->MakeIterator());
+  fTowerECalTrackArray = make_unique<TObjArray>();
+  fItTowerECalTrackArray.reset(fTowerECalTrackArray->MakeIterator());
+  fTowerHCalTrackArray = make_unique<TObjArray>();
+  fItTowerHCalTrackArray.reset(fTowerHCalTrackArray->MakeIterator());
 }
 
 //------------------------------------------------------------------------------
 
 OldCalorimeter::~OldCalorimeter()
 {
-  if(fECalResolutionFormula) delete fECalResolutionFormula;
-  if(fHCalResolutionFormula) delete fHCalResolutionFormula;
-
-  if(fTowerECalArray) delete fTowerECalArray;
-  if(fItTowerECalArray) delete fItTowerECalArray;
-  if(fTowerHCalArray) delete fTowerHCalArray;
-  if(fItTowerHCalArray) delete fItTowerHCalArray;
-
-  if(fTowerTrackArray) delete fTowerTrackArray;
-  if(fItTowerTrackArray) delete fItTowerTrackArray;
-  if(fTowerECalTrackArray) delete fTowerECalTrackArray;
-  if(fItTowerECalTrackArray) delete fItTowerECalTrackArray;
-  if(fTowerHCalTrackArray) delete fTowerHCalTrackArray;
-  if(fItTowerHCalTrackArray) delete fItTowerHCalTrackArray;
 }
 
 //------------------------------------------------------------------------------
@@ -108,11 +88,25 @@ void OldCalorimeter::Init()
     paramPhiBins = param[i * 2 + 1];
     sizePhiBins = paramPhiBins.GetSize();
 
-    for(j = 0; j < sizeEtaBins; ++j)
+    if(sizePhiBins == 1)
     {
-      for(k = 0; k < sizePhiBins; ++k)
+      sizePhiBins = paramPhiBins.GetInt() / 2;
+      for(j = 0; j < sizeEtaBins; ++j)
       {
-        fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        for(k = -sizePhiBins; k <= sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(TMath::Pi() * k / sizePhiBins);
+        }
+      }
+    }
+    else
+    {
+      for(j = 0; j < sizeEtaBins; ++j)
+      {
+        for(k = 0; k < sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        }
       }
     }
   }
@@ -122,8 +116,8 @@ void OldCalorimeter::Init()
   for(itEtaBin = fBinMap.begin(); itEtaBin != fBinMap.end(); ++itEtaBin)
   {
     fEtaBins.push_back(itEtaBin->first);
-    phiBins = new vector<double>(itEtaBin->second.size());
-    fPhiBins.push_back(phiBins);
+    fPhiBins.push_back(make_unique<vector<double> >(itEtaBin->second.size()));
+    phiBins = fPhiBins.back().get();
     phiBins->clear();
     for(itPhiBin = itEtaBin->second.begin(); itPhiBin != itEtaBin->second.end(); ++itPhiBin)
     {
@@ -161,10 +155,10 @@ void OldCalorimeter::Init()
 
   // import array with output from other modules
   fParticleInputArray = ImportArray(GetString("ParticleInputArray", "ParticlePropagator/particles"));
-  fItParticleInputArray = fParticleInputArray->MakeIterator();
+  fItParticleInputArray.reset(fParticleInputArray->MakeIterator());
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "ParticlePropagator/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   // create output arrays
   fTowerOutputArray = ExportArray(GetString("TowerOutputArray", "towers"));
@@ -178,13 +172,6 @@ void OldCalorimeter::Init()
 
 void OldCalorimeter::Finish()
 {
-  vector<vector<Double_t> *>::iterator itPhiBin;
-  if(fItParticleInputArray) delete fItParticleInputArray;
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  for(itPhiBin = fPhiBins.begin(); itPhiBin != fPhiBins.end(); ++itPhiBin)
-  {
-    delete *itPhiBin;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -243,7 +230,7 @@ void OldCalorimeter::Process()
     etaBin = distance(fEtaBins.begin(), itEtaBin);
 
     // phi bins for given eta bin
-    phiBins = fPhiBins[etaBin];
+    phiBins = fPhiBins[etaBin].get();
 
     // find phi bin [1, phiBins.size - 1]
     itPhiBin = lower_bound(phiBins->begin(), phiBins->end(), particlePosition.Phi());
@@ -286,7 +273,7 @@ void OldCalorimeter::Process()
     etaBin = distance(fEtaBins.begin(), itEtaBin);
 
     // phi bins for given eta bin
-    phiBins = fPhiBins[etaBin];
+    phiBins = fPhiBins[etaBin].get();
 
     // find phi bin [1, phiBins.size - 1]
     itPhiBin = lower_bound(phiBins->begin(), phiBins->end(), trackPosition.Phi());
@@ -314,7 +301,7 @@ void OldCalorimeter::Process()
   {
     towerHit = (*itTowerHits);
     flags = (towerHit >> 24) & 0x00000000000000FFLL;
-    number = (towerHit)&0x0000000000FFFFFFLL;
+    number = (towerHit) & 0x0000000000FFFFFFLL;
     hitEtaPhi = towerHit >> 32;
 
     if(towerEtaPhi != hitEtaPhi)
@@ -332,7 +319,7 @@ void OldCalorimeter::Process()
       etaBin = (towerHit >> 48) & 0x000000000000FFFFLL;
 
       // phi bins for given eta bin
-      phiBins = fPhiBins[etaBin];
+      phiBins = fPhiBins[etaBin].get();
 
       // calculate eta and phi of the tower's center
       fTowerEta = 0.5 * (fEtaBins[etaBin - 1] + fEtaBins[etaBin]);
@@ -489,11 +476,11 @@ void OldCalorimeter::FinalizeTower()
   {
     if(fTowerECalHits == fTowerECalTrackHits && fTowerHCalHits == fTowerHCalTrackHits)
     {
-      itTowerTrackArray = fItTowerTrackArray;
+      itTowerTrackArray = fItTowerTrackArray.get();
     }
     else if(fTowerECalHits == fTowerECalTrackHits)
     {
-      itTowerTrackArray = fItTowerECalTrackArray;
+      itTowerTrackArray = fItTowerECalTrackArray.get();
 
       if(hcalEnergy > 0.0)
       {
@@ -525,7 +512,7 @@ void OldCalorimeter::FinalizeTower()
     }
     else if(fTowerHCalHits == fTowerHCalTrackHits)
     {
-      itTowerTrackArray = fItTowerHCalTrackArray;
+      itTowerTrackArray = fItTowerHCalTrackArray.get();
 
       if(ecalEnergy > 0.0)
       {

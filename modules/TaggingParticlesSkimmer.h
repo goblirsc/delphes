@@ -31,6 +31,7 @@
  */
 
 #include "classes/DelphesModule.h"
+#include <memory>
 
 class TIterator;
 class TObjArray;
@@ -52,16 +53,16 @@ private:
   Double_t fPTMin; //!
   Double_t fEtaMax; //!
 
-  TauTaggingPartonClassifier *fClassifier; //!
+  std::unique_ptr<TauTaggingPartonClassifier> fClassifier; //!
 
-  ExRootFilter *fFilter;
+  std::unique_ptr<ExRootFilter> fFilter; //!
 
-  TIterator *fItPartonInputArray; //!
+  std::unique_ptr<TIterator> fItPartonInputArray; //!
 
-  const TObjArray *fPartonInputArray; //!
-  const TObjArray *fParticleInputArray; //!
+  const TObjArray *fPartonInputArray = nullptr; //!
+  const TObjArray *fParticleInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(TaggingParticlesSkimmer, 1)
 };

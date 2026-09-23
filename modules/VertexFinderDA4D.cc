@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -96,6 +97,8 @@ VertexFinderDA4D::VertexFinderDA4D() :
   fUseTc(0), fBetaMax(0), fBetaStop(0), fCoolingFactor(0),
   fMaxIterations(0), fDzCutOff(0), fD0CutOff(0), fDtCutOff(0)
 {
+  fClusterArray = make_unique<TObjArray>();
+  fItClusterArray.reset(fClusterArray->MakeIterator());
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +132,7 @@ void VertexFinderDA4D::Init()
   fD0CutOff /= 10.0;
 
   fInputArray = ImportArray(GetString("InputArray", "TrackSmearing/tracks"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   fOutputArray = ExportArray(GetString("OutputArray", "tracks"));
   fVertexOutputArray = ExportArray(GetString("VertexOutputArray", "vertices"));
@@ -139,7 +142,6 @@ void VertexFinderDA4D::Init()
 
 void VertexFinderDA4D::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------
@@ -147,9 +149,6 @@ void VertexFinderDA4D::Finish()
 void VertexFinderDA4D::Process()
 {
   Candidate *candidate, *track;
-  TObjArray *ClusterArray;
-  ClusterArray = new TObjArray;
-  TIterator *ItClusterArray;
   Int_t ivtx = 0;
 
   fInputArray->Sort();
@@ -171,17 +170,17 @@ void VertexFinderDA4D::Process()
   }
 
   // clusterize tracks in Z
-  clusterize(*fInputArray, *ClusterArray);
+  fClusterArray->Clear();
+  clusterize(*fInputArray, *fClusterArray);
 
   if(fVerbose)
   {
-    std::cout << " clustering returned  " << ClusterArray->GetEntriesFast() << " clusters  from " << fInputArray->GetEntriesFast() << " selected tracks" << std::endl;
+    std::cout << " clustering returned  " << fClusterArray->GetEntriesFast() << " clusters  from " << fInputArray->GetEntriesFast() << " selected tracks" << std::endl;
   }
 
-  //loop over vertex candidates
-  ItClusterArray = ClusterArray->MakeIterator();
-  ItClusterArray->Reset();
-  while((candidate = static_cast<Candidate *>(ItClusterArray->Next())))
+  // loop over vertex candidates
+  fItClusterArray->Reset();
+  while((candidate = static_cast<Candidate *>(fItClusterArray->Next())))
   {
 
     double meantime = 0.;
@@ -271,7 +270,7 @@ void VertexFinderDA4D::Process()
 
   if(fVerbose)
   {
-    std::cout << "PrimaryVertexProducerAlgorithm::vertices candidates =" << ClusterArray->GetEntriesFast() << std::endl;
+    std::cout << "PrimaryVertexProduceClusterArrayrAlgorithm::vertices candidates =" << fClusterArray->GetEntriesFast() << std::endl;
   }
 
   //TBC maybe this can be done later
@@ -280,8 +279,6 @@ void VertexFinderDA4D::Process()
       sort(pvs.begin(), pvs.end(), VertexHigherPtSquared());
     }
      */
-
-  delete ClusterArray;
 }
 
 //------------------------------------------------------------------------------
@@ -622,14 +619,14 @@ vector<Candidate *> VertexFinderDA4D::vertices()
                                    0,0,0,crappy_error_guess);*/
     //TransientVertex v(pos, time, dummyErrorWithTime, vertexTracks, 5);
 
-    candidate->ClusterIndex = clusterIndex++;
-    ;
+    candidate->ClusterIndex = clusterIndex;
+
     candidate->Position.SetXYZT(0.0, 0.0, z * 10.0, time * c_light);
 
     // TBC - fill error later ...
     candidate->PositionError.SetXYZT(0.0, 0.0, 0.0, crappy_error_guess * c_light);
 
-    clusterIndex++;
+    ++clusterIndex;
     clusters.push_back(candidate);
   }
 

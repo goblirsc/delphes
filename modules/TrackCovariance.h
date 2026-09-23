@@ -30,6 +30,8 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TIterator;
 class TObjArray;
 
@@ -52,20 +54,20 @@ private:
   Double_t fBz;
   Int_t fNMinHits;
 
-  DelphesFormula *fElectronScaleFactor;
-  DelphesFormula *fMuonScaleFactor;
-  DelphesFormula *fChargedHadronScaleFactor;
+  std::unique_ptr<DelphesFormula> fElectronScaleFactor; //!
+  std::unique_ptr<DelphesFormula> fMuonScaleFactor; //!
+  std::unique_ptr<DelphesFormula> fChargedHadronScaleFactor; //!
 
-  SolGeom *fGeometry;
-  SolGridCov *fCovariance;
+  std::unique_ptr<SolGeom> fGeometry; //!
+  std::unique_ptr<SolGridCov> fCovariance; //!
 
-  AcceptanceClx *fAcx;
+  AcceptanceClx *fAcx = nullptr;
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(TrackCovariance, 1)
 };

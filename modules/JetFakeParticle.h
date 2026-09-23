@@ -30,6 +30,9 @@
 
 #include "classes/DelphesModule.h"
 
+#include <map>
+#include <memory>
+
 class TIterator;
 class TObjArray;
 class DelphesFormula;
@@ -46,18 +49,18 @@ public:
 
 private:
 #if !defined(__CINT__) && !defined(__CLING__)
-  typedef std::map<Int_t, DelphesFormula *> TFakeMap; //!
+  typedef std::map<Int_t, std::unique_ptr<DelphesFormula> > TFakeMap; //!
   TFakeMap fEfficiencyMap;
 #endif
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fElectronOutputArray; //!
-  TObjArray *fMuonOutputArray; //!
-  TObjArray *fPhotonOutputArray; //!
-  TObjArray *fJetOutputArray; //!
+  TObjArray *fElectronOutputArray = nullptr; //!
+  TObjArray *fMuonOutputArray = nullptr; //!
+  TObjArray *fPhotonOutputArray = nullptr; //!
+  TObjArray *fJetOutputArray = nullptr; //!
 
   ClassDef(JetFakeParticle, 1)
 };

@@ -45,15 +45,16 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 
 using namespace std;
 
 //------------------------------------------------------------------------------
 
-JetFakeParticle::JetFakeParticle() :
-  fItInputArray(0)
+JetFakeParticle::JetFakeParticle()
 {
 }
 
@@ -69,7 +70,7 @@ void JetFakeParticle::Init()
 {
   TFakeMap::iterator itEfficiencyMap;
   ExRootConfParam param;
-  DelphesFormula *formula;
+  unique_ptr<DelphesFormula> formula;
   Int_t i, size, pdgCode;
 
   // read efficiency formulas
@@ -80,7 +81,7 @@ void JetFakeParticle::Init()
 
   for(i = 0; i < size / 2; ++i)
   {
-    formula = new DelphesFormula;
+    formula = make_unique<DelphesFormula>();
     formula->Compile(param[i * 2 + 1].GetString());
     pdgCode = param[i * 2].GetInt();
 
@@ -89,23 +90,23 @@ void JetFakeParticle::Init()
       throw runtime_error("Jets can only fake into electrons, muons or photons. Other particles are not authorized.");
     }
 
-    fEfficiencyMap[param[i * 2].GetInt()] = formula;
+    fEfficiencyMap[param[i * 2].GetInt()] = move(formula);
   }
 
   // set default efficiency formula
   itEfficiencyMap = fEfficiencyMap.find(0);
   if(itEfficiencyMap == fEfficiencyMap.end())
   {
-    formula = new DelphesFormula;
+    formula = make_unique<DelphesFormula>();
     formula->Compile("0.0");
 
-    fEfficiencyMap[0] = formula;
+    fEfficiencyMap[0] = move(formula);
   }
 
   // import input array
 
   fInputArray = ImportArray(GetString("InputArray", "FastJetFinder/jets"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array
 
@@ -119,15 +120,6 @@ void JetFakeParticle::Init()
 
 void JetFakeParticle::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
-
-  TFakeMap::iterator itEfficiencyMap;
-  DelphesFormula *formula;
-  for(itEfficiencyMap = fEfficiencyMap.begin(); itEfficiencyMap != fEfficiencyMap.end(); ++itEfficiencyMap)
-  {
-    formula = itEfficiencyMap->second;
-    if(formula) delete formula;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -158,7 +150,7 @@ void JetFakeParticle::Process()
     // loop over map for this jet
     for(itEfficiencyMap = fEfficiencyMap.begin(); itEfficiencyMap != fEfficiencyMap.end(); ++itEfficiencyMap)
     {
-      formula = itEfficiencyMap->second;
+      formula = itEfficiencyMap->second.get();
       pdgCodeOut = itEfficiencyMap->first;
 
       p = formula->Eval(pt, eta, phi, e);

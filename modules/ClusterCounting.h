@@ -30,6 +30,8 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TIterator;
 class TObjArray;
 
@@ -46,22 +48,21 @@ public:
   void Finish();
 
 private:
-
   Double_t fRmin;
-	Double_t fRmax;
-	Double_t fZmin;
-	Double_t fZmax;
+  Double_t fRmax;
+  Double_t fZmin;
+  Double_t fZmax;
   Double_t fBz;
 
   Int_t fGasOption;
 
-  TrkUtil *fTrackUtil;
+  std::unique_ptr<TrkUtil> fTrackUtil; //!
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(ClusterCounting, 1)
 };

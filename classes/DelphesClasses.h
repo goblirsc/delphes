@@ -258,6 +258,21 @@ public:
 
   Float_t EhadOverEem; // ratio of the hadronic versus electromagnetic energy deposited in the calorimeter
 
+  Float_t X; // reference point of the photon track on the calorimeter
+  Float_t Y; // reference point of the photon track on the calorimeter
+  Float_t Z; // reference point of the photon track on the calorimeter
+
+  Float_t ErrorTheta; // resolution on the polar angle of the momentum direction
+  Float_t ErrorPhi; // resolution on the azimuthal angle of the momentum direction
+
+  Float_t ThetaP; // polar angle of the vertex-agnostic pointing direction
+  Float_t PhiP; // azimuthal angle of the vertex-agnostic pointing direction
+
+  Float_t ErrorThetaP; // resolution on the polar angle of the pointing direction
+  Float_t ErrorPhiP; // resolution on the azimuthal angle of the pointing direction
+
+  Float_t ErrorE; // resolution on the reconstructed energy
+
   TRefArray Particles; // references to generated particles
 
   Float_t IsolationVar; // isolation variable
@@ -274,7 +289,7 @@ public:
 
   TLorentzVector P4() const;
 
-  ClassDef(Photon, 4)
+  ClassDef(Photon, 5)
 };
 
 //---------------------------------------------------------------------------
@@ -377,6 +392,8 @@ public:
   UInt_t TauTag; // 0 or 1 for a jet that has been tagged as a tau
   Float_t TauWeight; // probability for jet to be identified as tau
 
+  UInt_t BoostedTag; // bitmask of boosted-resonance fatjet tags (W/Z/H/top)
+
   Int_t Charge; // tau charge
 
   Float_t EhadOverEem; // ratio of the hadronic versus electromagnetic energy deposited in the calorimeter
@@ -422,7 +439,7 @@ public:
   TLorentzVector P4() const;
   TLorentzVector Area;
 
-  ClassDef(Jet, 5)
+  ClassDef(Jet, 6)
 };
 
 //---------------------------------------------------------------------------
@@ -437,7 +454,6 @@ public:
   Int_t IsPU; // 0 or 1 for particles from pile-up interactions
   Int_t IsRecoPU; // 0 or 1 for reconstructed particles from pile-up
   Float_t HardEnergyFraction; // fraction of hard scattering vs PU energy in the particle flow candidate
-
 
   Float_t P; // track momentum
   Float_t PT; // track transverse momentum
@@ -491,7 +507,7 @@ public:
   Float_t ErrorD0CtgTheta;
   Float_t ErrorPhiC;
   Float_t ErrorPhiDZ;
-  Float_t ErrorPhiCtgTheta ;
+  Float_t ErrorPhiCtgTheta;
   Float_t ErrorCDZ;
   Float_t ErrorCCtgTheta;
   Float_t ErrorDZCtgTheta;
@@ -525,6 +541,17 @@ public:
   Float_t Y; // calo tower position
   Float_t Z; // calo tower position
 
+  Float_t ErrorTheta; // resolution on the polar angle of the momentum direction
+  Float_t ErrorPhi; // resolution on the azimuthal angle of the momentum direction
+
+  Float_t ThetaP; // polar angle of the vertex-agnostic pointing direction
+  Float_t PhiP; // azimuthal angle of the vertex-agnostic pointing direction
+
+  Float_t ErrorThetaP; // resolution on the polar angle of the pointing direction
+  Float_t ErrorPhiP; // resolution on the azimuthal angle of the pointing direction
+
+  Float_t ErrorE; // resolution on the reconstructed energy
+
   Int_t NTimeHits; // number of hits contributing to time measurement
 
   Float_t Eem; // calorimeter tower electromagnetic energy
@@ -544,7 +571,7 @@ public:
 
   TLorentzVector P4() const;
 
-  ClassDef(Tower, 5)
+  ClassDef(Tower, 6)
 };
 
 //---------------------------------------------------------------------------
@@ -614,10 +641,17 @@ public:
   Float_t ErrorD0CtgTheta;
   Float_t ErrorPhiC;
   Float_t ErrorPhiDZ;
-  Float_t ErrorPhiCtgTheta ;
+  Float_t ErrorPhiCtgTheta;
   Float_t ErrorCDZ;
   Float_t ErrorCCtgTheta;
   Float_t ErrorDZCtgTheta;
+
+  Float_t ErrorTheta; // resolution on the polar angle of the momentum direction (photons)
+  Float_t ThetaP; // polar angle of the vertex-agnostic pointing direction (photons)
+  Float_t PhiP; // azimuthal angle of the vertex-agnostic pointing direction (photons)
+  Float_t ErrorThetaP; // resolution on the polar angle of the pointing direction (photons)
+  Float_t ErrorPhiP; // resolution on the azimuthal angle of the pointing direction (photons)
+  Float_t ErrorE; // resolution on the reconstructed energy (photons)
 
   Int_t VertexIndex; // reference to vertex
 
@@ -637,8 +671,7 @@ public:
 
   TRefArray Particles; // references to generated particles
 
-  ClassDef(ParticleFlowCandidate, 4)
-
+  ClassDef(ParticleFlowCandidate, 5)
 };
 
 //---------------------------------------------------------------------------
@@ -728,6 +761,8 @@ public:
 
   UInt_t TauTag;
   Float_t TauWeight;
+
+  UInt_t BoostedTag;
 
   Float_t Eem;
   Float_t Ehad;
@@ -857,7 +892,7 @@ private:
 
   void SetFactory(DelphesFactory *factory) { fFactory = factory; }
 
-  ClassDef(Candidate, 6)
+  ClassDef(Candidate, 7)
 };
 
 #endif // DelphesClasses_h

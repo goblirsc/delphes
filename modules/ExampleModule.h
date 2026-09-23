@@ -30,6 +30,7 @@
 #include "classes/DelphesModule.h"
 
 #include <deque>
+#include <memory>
 
 class TObjArray;
 class DelphesFormula;
@@ -50,13 +51,13 @@ private:
 
   std::deque<Double_t> fArrayParam;
 
-  DelphesFormula *fFormula; //!
+  std::unique_ptr<DelphesFormula> fFormula; //!
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(ExampleModule, 1)
 };

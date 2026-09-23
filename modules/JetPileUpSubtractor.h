@@ -30,6 +30,7 @@
 #include "classes/DelphesModule.h"
 
 #include <deque>
+#include <memory>
 
 class TObjArray;
 
@@ -46,13 +47,13 @@ public:
 private:
   Double_t fJetPTMin;
 
-  TIterator *fItJetInputArray; //!
-  TIterator *fItRhoInputArray; //!
+  std::unique_ptr<TIterator> fItJetInputArray; //!
+  std::unique_ptr<TIterator> fItRhoInputArray; //!
 
-  const TObjArray *fJetInputArray; //!
-  const TObjArray *fRhoInputArray; //!
+  const TObjArray *fJetInputArray = nullptr; //!
+  const TObjArray *fRhoInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(JetPileUpSubtractor, 1)
 };

@@ -13,6 +13,7 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
 #include <string>
 
 class TObjArray;
@@ -30,18 +31,18 @@ public:
   void Finish();
 
 private:
-  TObjArray *fInputArray;
+  TObjArray *fInputArray = nullptr;
 
-  TObjArray *fTrackInputArray;
-  TIterator *fItTrackInputArray;
+  TObjArray *fTrackInputArray = nullptr;
+  std::unique_ptr<TIterator> fItTrackInputArray; //!
 
-  TObjArray *fJetInputArray;
-  TIterator *fItJetInputArray;
+  TObjArray *fJetInputArray = nullptr;
+  std::unique_ptr<TIterator> fItJetInputArray; //!
 
-  TObjArray *fBeamSpotInputArray;
-  TIterator *fItBeamSpotInputArray;
+  TObjArray *fBeamSpotInputArray = nullptr;
+  std::unique_ptr<TIterator> fItBeamSpotInputArray; //!
 
-  TObjArray *fOutputArray;
+  TObjArray *fOutputArray = nullptr;
 
   std::string fMethod;
 

@@ -35,6 +35,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 
 class TObjArray;
 class DelphesFormula;
@@ -58,22 +59,22 @@ private:
   Double_t fDeltaR;
 
 #if !defined(__CINT__) && !defined(__CLING__)
-  std::map<Int_t, DelphesFormula *> fEfficiencyMap; //!
+  std::map<Int_t, std::unique_ptr<DelphesFormula> > fEfficiencyMap; //!
 #endif
 
-  TauTaggingPartonClassifier *fClassifier; //!
+  std::unique_ptr<TauTaggingPartonClassifier> fClassifier; //!
 
-  ExRootFilter *fFilter;
+  std::unique_ptr<ExRootFilter> fFilter; //!
 
-  TIterator *fItPartonInputArray; //!
+  std::unique_ptr<TIterator> fItPartonInputArray; //!
 
-  TIterator *fItJetInputArray; //!
+  std::unique_ptr<TIterator> fItJetInputArray; //!
 
-  const TObjArray *fParticleInputArray; //!
+  const TObjArray *fParticleInputArray = nullptr; //!
 
-  const TObjArray *fPartonInputArray; //!
+  const TObjArray *fPartonInputArray = nullptr; //!
 
-  const TObjArray *fJetInputArray; //!
+  const TObjArray *fJetInputArray = nullptr; //!
 
   ClassDef(TauTagging, 1)
 };
@@ -89,7 +90,7 @@ public:
 
   Double_t fEtaMax, fPTMin;
 
-  const TObjArray *fParticleInputArray;
+  const TObjArray *fParticleInputArray = nullptr;
 };
 
 #endif

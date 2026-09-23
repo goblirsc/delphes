@@ -29,6 +29,8 @@ set DCHRMAX 2.02
 
 set ExecutionPath {
 
+  BeamSpotSmearing
+
   TruthVertexFinder
   ParticlePropagator
 
@@ -87,6 +89,23 @@ set ExecutionPath {
 }
 
 #################################
+# Beam spot smearing
+#################################
+
+module BeamSpotSmearing BeamSpotSmearing {
+
+  set InputArray Delphes/allParticles
+
+  # beam spot size in x, y, z [m] and bunch time spread [s]
+  # FCC-ee Z pole example: 5.96E-06, 23.8E-09, 0.397E-03, 36.3E-12
+  set SigmaX 0.0
+  set SigmaY 0.0
+  set SigmaZ 0.0
+  set SigmaT 0.0
+}
+
+
+#################################
 # Truth Vertex Finder
 #################################
 
@@ -113,13 +132,13 @@ module ParticlePropagator ParticlePropagator {
   set MuonOutputArray muons
 
   # inner radius of the solenoid, in m
-  set Radius $R
+  set Radius $::R
 
   # half-length: z of the solenoid, in m
-  set HalfLength $HL
+  set HalfLength $::HL
 
   # magnetic field, in T
-  set Bz $B
+  set Bz $::B
 }
 
 ####################################
@@ -200,7 +219,7 @@ module TrackCovariance TrackSmearing {
     set NMinHits 6
 
     ## magnetic field
-    set Bz $B
+    set Bz $::B
 
     ## scale factors
     set ElectronScaleFactor  {1.25}
@@ -225,9 +244,9 @@ module TrackCovariance TrackSmearing {
       # barrel  name       zmin   zmax   r        w (m)      X0        n_meas  th_up (rad) th_down (rad)    reso_up (m)   reso_down (m)  flag
 
       1 PIPE -100 100 0.01 0.00235 0.35276 0 0 0 0 0 0
-      1 VTXLOW -0.0965 0.0965 0.012 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
-      1 VTXLOW -0.1609 0.1609 0.02 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
-      1 VTXLOW -0.2575 0.2575 0.031525 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
+      1 VTXLOW -0.109 0.109 0.013 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
+      1 VTXLOW -0.109 0.109 0.035 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
+      1 VTXLOW -0.109 0.109 0.057 0.00028 0.0937 2 0 1.5708 3e-06 3e-06 1
       1 ITK -0.4816 0.4816 0.127 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
       1 ITK -0.4816 0.4816 0.4 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
       1 ITK -0.6923 0.6923 0.67 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
@@ -242,12 +261,12 @@ module TrackCovariance TrackSmearing {
       1 OTK -1.2642 1.2642 1.005 0.000244 0.0937 0 0 0 0 0 0
       1 OTK -1.2642 1.2642 1.578 0.000117 0.0937 0 0 0 0 0 0
       1 OTK -1.2642 1.2642 2.126 0.000117 0.0937 0 0 0 0 0 0
-      2 VTXDSK 0.105 0.29 -0.93 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
-      2 VTXDSK 0.075 0.29 -0.62 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
-      2 VTXDSK 0.0365 0.2515 -0.2575 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
-      2 VTXDSK 0.0365 0.2515 0.2575 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
-      2 VTXDSK 0.075 0.29 0.62 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
-      2 VTXDSK 0.105 0.29 0.93 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.045 0.102 -0.3 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.0345 0.102 -0.23 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.024 0.102 -0.16 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.024 0.102 0.16 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.0345 0.102 0.23 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
+      2 VTXDSK 0.045 0.102 0.3 0.00028 0.0937 2 0 1.5708 7e-06 7e-06 1
       2 ITKDSK 0.33 0.647 -2.19 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
       2 ITKDSK 0.293 0.64 -1.946 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
       2 ITKDSK 0.2495 0.657 -1.661 0.000956 0.0937 2 0 1.5708 7e-006 9e-005 1
@@ -312,13 +331,13 @@ module ClusterCounting ClusterCounting {
   add InputArray TrackSmearing/tracks
   set OutputArray tracks
 
-  set Bz $B
+  set Bz $::B
 
   ## check that these are consistent with DCHCANI/DCHNANO parameters in TrackCovariance module
-  set Rmin $DCHRMIN
-  set Rmax $DCHRMAX
-  set Zmin $DCHZMIN
-  set Zmax $DCHZMAX
+  set Rmin $::DCHRMIN
+  set Rmax $::DCHRMAX
+  set Zmin $::DCHZMIN
+  set Zmax $::DCHZMAX
 
   # gas mix option:
   # 0:  Helium 90% - Isobutane 10%
@@ -381,7 +400,7 @@ module Merger TrackMerger {
 module Efficiency ForwardLooperTracks  {
   set InputArray TrackMerger/tracks
   set OutputArray tracks
-  set UseMomentumVector False
+  set UseMomentumVector false
 
   ## select looping tracks that end up in position |eta| > 3.142 (lost by calo)
   set EfficiencyFormula {
@@ -427,13 +446,7 @@ module DualReadoutCalorimeter Calorimeter {
 
     set pi [expr {acos(-1)}]
 
-    set nbins_phi [expr {$pi/$EtaPhiRes} ]
-    set nbins_phi [expr {int($nbins_phi)} ]
-
-    set PhiBins {}
-    for {set i -$nbins_phi} {$i <= $nbins_phi} {incr i} {
-      add PhiBins [expr {$i * $pi/$nbins_phi}]
-    }
+    set PhiBins [expr {int($pi/$EtaPhiRes) * 2}]
 
     set nbins_eta [expr {$EtaMax/$EtaPhiRes} ]
     set nbins_eta [expr {int($nbins_eta)} ]
@@ -934,5 +947,5 @@ module TreeWriter TreeWriter {
     add Branch FastJetFinderDurhamN2/jets JetDurhamN2 Jet
 
     # add Info InfoName InfoValue
-    add Info Bz $B
+    add Info Bz $::B
 }

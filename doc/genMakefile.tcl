@@ -99,7 +99,7 @@ proc sourceDeps {srcPrefix args} {
     regsub {\.cc} $fileName {} srcName
     set srcObjName $prefix$srcName
 
-    if {$fileName == "modules/PileUpMergerPythia8.cc"} {
+    if {$fileName in [list classes/DelphesPythia8Reader.cc modules/PileUpMergerPythia8.cc]} {
       lappend srcObjFilesPythia8 $srcObjName$objSuf
     } elseif {([string match {modules/FastJet*.cc} $fileName] || [string match {modules/RunPUPPI.cc} $fileName]) && $srcPrefix != {FASTJET}} {
       continue
@@ -201,7 +201,7 @@ DISPLAY_LIBS = $(shell $(RC) --evelibs) -lGuiHtml
 
 ifneq ($(CMSSW_FWLITE_INCLUDE_PATH),)
 HAS_CMSSW = true
-CXXFLAGS += -std=c++0x -I$(subst :, -I,$(CMSSW_FWLITE_INCLUDE_PATH))
+CXXFLAGS += -std=c++17 -I$(subst :, -I,$(CMSSW_FWLITE_INCLUDE_PATH))
 OPT_LIBS += -L$(subst include,lib,$(subst :, -L,$(CMSSW_FWLITE_INCLUDE_PATH)))
 ifneq ($(CMSSW_RELEASE_BASE),)
 CXXFLAGS += -I$(CMSSW_RELEASE_BASE)/src
@@ -294,12 +294,13 @@ puts {endif}
 
 puts {ifeq ($(HAS_PYTHIA8),true)}
 executableDeps {readers/DelphesPythia8.cpp}
-dictDeps {DELPHES_DICT} {modules/Pythia8LinkDef.h}
+dictDeps {DELPHES_DICT} {classes/ClassesPythia8LinkDef.h}
+dictDeps {DELPHES_DICT} {modules/ModulesPythia8LinkDef.h}
 puts {endif}
 
 dictDeps {DELPHES_DICT} {classes/ClassesLinkDef.h} {modules/ModulesLinkDef.h} {external/ExRootAnalysis/ExRootAnalysisLinkDef.h}
 
-dictDeps {FASTJET_DICT} {modules/FastJetLinkDef.h}
+dictDeps {FASTJET_DICT} {modules/ModulesFastJetLinkDef.h}
 
 dictDeps {DISPLAY_DICT} {display/DisplayLinkDef.h}
 

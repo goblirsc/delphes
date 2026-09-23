@@ -29,6 +29,8 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TObjArray;
 class DelphesTF2;
 
@@ -61,16 +63,16 @@ private:
 
   Double_t fPTMin;
 
-  DelphesTF2 *fFunction; //!
+  std::unique_ptr<DelphesTF2> fFunction; //!
 
-  Pythia8::Pythia *fPythia; //!
+  std::unique_ptr<Pythia8::Pythia> fPythia; //!
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fParticleOutputArray; //!
-  TObjArray *fVertexOutputArray; //!
+  TObjArray *fParticleOutputArray = nullptr; //!
+  TObjArray *fVertexOutputArray = nullptr; //!
 
   ClassDef(PileUpMergerPythia8, 1)
 };

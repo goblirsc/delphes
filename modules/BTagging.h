@@ -32,6 +32,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 
 class TObjArray;
 class DelphesFormula;
@@ -50,12 +51,12 @@ private:
   Int_t fBitNumber;
 
 #if !defined(__CINT__) && !defined(__CLING__)
-  std::map<Int_t, DelphesFormula *> fEfficiencyMap; //!
+  std::map<Int_t, std::unique_ptr<DelphesFormula> > fEfficiencyMap; //!
 #endif
 
-  TIterator *fItJetInputArray; //!
+  std::unique_ptr<TIterator> fItJetInputArray; //!
 
-  const TObjArray *fJetInputArray; //!
+  const TObjArray *fJetInputArray = nullptr; //!
 
   ClassDef(BTagging, 1)
 };

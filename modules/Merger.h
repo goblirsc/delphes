@@ -30,6 +30,7 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
 #include <vector>
 
 class TIterator;
@@ -46,11 +47,11 @@ public:
   void Finish();
 
 private:
-  std::vector<TIterator *> fInputList; //!
+  std::vector<std::unique_ptr<TIterator> > fInputList; //!
 
-  TObjArray *fOutputArray; //!
-  TObjArray *fMomentumOutputArray; //!
-  TObjArray *fEnergyOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
+  TObjArray *fMomentumOutputArray = nullptr; //!
+  TObjArray *fEnergyOutputArray = nullptr; //!
 
   ClassDef(Merger, 1)
 };

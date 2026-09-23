@@ -3,7 +3,7 @@
 
 /** \class ExRootConfReader
  *
- *  Class handling output ROOT tree
+ *  Class handling configuration data
  *
  *  \author P. Demin - UCL, Louvain-la-Neuve
  *
@@ -11,16 +11,13 @@
 
 #include "TNamed.h"
 
-#include <map>
-#include <utility>
+struct Jim_Obj;
+struct Jim_Interp;
 
-struct Tcl_Obj;
-struct Tcl_Interp;
-
-class ExRootConfParam
+class ExRootConfParam: public TNamed
 {
 public:
-  ExRootConfParam(const char *name = 0, Tcl_Obj *object = 0, Tcl_Interp *interp = 0);
+  ExRootConfParam(const char *name = 0, Jim_Obj *object = 0, Jim_Interp *interp = 0);
 
   int GetInt(int defaultValue = 0);
   long GetLong(long defaultValue = 0);
@@ -32,9 +29,10 @@ public:
   ExRootConfParam operator[](int index);
 
 private:
-  const char *fName; //!
-  Tcl_Obj *fObject; //!
-  Tcl_Interp *fTclInterp; //!
+  Jim_Obj *fObject; //!
+  Jim_Interp *fTclInterp; //!
+
+  ClassDef(ExRootConfParam, 1)
 };
 
 //------------------------------------------------------------------------------
@@ -42,11 +40,10 @@ private:
 class ExRootConfReader: public TNamed
 {
 public:
-  typedef std::map<TString, TString> ExRootTaskMap;
-
   ExRootConfReader();
   ~ExRootConfReader();
 
+  void ReadData(const char *dirName, char *data, int length);
   void ReadFile(const char *fileName, bool isTop = true);
 
   int GetInt(const char *name, int defaultValue, int index = -1);
@@ -56,18 +53,12 @@ public:
   const char *GetString(const char *name, const char *defaultValue, int index = -1);
   ExRootConfParam GetParam(const char *name);
 
-  const ExRootTaskMap *GetModules() const { return &fModules; }
-
-  void AddModule(const char *className, const char *moduleName);
-
   const char *GetTopDir() const { return fTopDir; }
 
 private:
   const char *fTopDir; //!
 
-  Tcl_Interp *fTclInterp; //!
-
-  ExRootTaskMap fModules; //!
+  Jim_Interp *fTclInterp; //!
 
   ClassDef(ExRootConfReader, 1)
 };

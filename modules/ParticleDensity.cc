@@ -36,15 +36,16 @@
 #include "ExRootAnalysis/ExRootResult.h"
 
 #include "TFormula.h"
+#include "TH2F.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TObjArray.h"
 #include "TRandom3.h"
 #include "TString.h"
-#include "TH2F.h"
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -52,14 +53,15 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-ParticleDensity::ParticleDensity() :
-  fItInputArray(0)
-{}
+ParticleDensity::ParticleDensity()
+{
+}
 
 //------------------------------------------------------------------------------
 
 ParticleDensity::~ParticleDensity()
-{}
+{
+}
 
 //------------------------------------------------------------------------------
 
@@ -69,7 +71,7 @@ void ParticleDensity::Init()
   // import input array(s)
 
   fInputArray = ImportArray(GetString("InputArray", "FastJetFinder/jets"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array(s)
 
@@ -85,7 +87,7 @@ void ParticleDensity::Init()
   {
     binsEta[i] = paramEta[i].GetDouble();
   }
-  
+
   ExRootConfParam paramPhi = GetParam("PhiBins");
   const Long_t sizePhi = paramPhi.GetSize();
   Int_t nbinsPhi = sizePhi - 1;
@@ -95,7 +97,7 @@ void ParticleDensity::Init()
     binsPhi[i] = paramPhi[i].GetDouble();
   }
 
-  fHisto = new TH2F("hParticleDensity", ";#eta;#varphi;d^{2}N/d#etad#varphi", nbinsEta, binsEta.data(), nbinsPhi, binsPhi.data());
+  fHisto = make_unique<TH2F>("hParticleDensity", ";#eta;#varphi;d^{2}N/d#etad#varphi", nbinsEta, binsEta.data(), nbinsPhi, binsPhi.data());
 
   fUseMomentumVector = GetBool("UseMomentumVector", false);
 }
@@ -104,8 +106,6 @@ void ParticleDensity::Init()
 
 void ParticleDensity::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
-  if (fHisto) delete fHisto;
 }
 
 //------------------------------------------------------------------------------
@@ -114,33 +114,38 @@ void ParticleDensity::Process()
 {
   Candidate *candidate;
   fHisto->Reset();
-  
+
   // loop over all input candidates to fill histogram
   fItInputArray->Reset();
-  while((candidate = static_cast<Candidate *>(fItInputArray->Next()))) {
-    if (fUseMomentumVector) fHisto->Fill(candidate->Momentum.Eta(), candidate->Momentum.Phi());
-    else                    fHisto->Fill(candidate->Position.Eta(), candidate->Position.Phi());
+  while((candidate = static_cast<Candidate *>(fItInputArray->Next())))
+  {
+    if(fUseMomentumVector)
+      fHisto->Fill(candidate->Momentum.Eta(), candidate->Momentum.Phi());
+    else
+      fHisto->Fill(candidate->Position.Eta(), candidate->Position.Phi());
   }
 
   // normalise by bin width
   fHisto->Scale(1., "width");
-  
+
   // loop over all input candidates to assign multiplicity
   fItInputArray->Reset();
-  while((candidate = static_cast<Candidate *>(fItInputArray->Next()))) {
+  while((candidate = static_cast<Candidate *>(fItInputArray->Next())))
+  {
     Int_t ieta, iphi;
-    if (fUseMomentumVector) {
+    if(fUseMomentumVector)
+    {
       ieta = fHisto->GetXaxis()->FindBin(candidate->Momentum.Eta());
       iphi = fHisto->GetYaxis()->FindBin(candidate->Momentum.Phi());
-    } else {
+    }
+    else
+    {
       ieta = fHisto->GetXaxis()->FindBin(candidate->Position.Eta());
       iphi = fHisto->GetYaxis()->FindBin(candidate->Position.Phi());
     }
     candidate->ParticleDensity = fHisto->GetBinContent(ieta, iphi);
     fOutputArray->Add(candidate);
   }
-
-  
 }
 
 //------------------------------------------------------------------------------

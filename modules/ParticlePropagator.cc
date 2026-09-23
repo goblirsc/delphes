@@ -47,6 +47,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -54,8 +55,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-ParticlePropagator::ParticlePropagator() :
-  fItInputArray(0)
+ParticlePropagator::ParticlePropagator()
 {
 }
 
@@ -90,7 +90,7 @@ void ParticlePropagator::Init()
   // import array with output from filter/classifier module
 
   fInputArray = ImportArray(GetString("InputArray", "Delphes/stableParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // import beamspot
   try
@@ -114,7 +114,6 @@ void ParticlePropagator::Init()
 
 void ParticlePropagator::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------

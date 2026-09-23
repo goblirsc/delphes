@@ -56,15 +56,17 @@ Int_t DelphesFormula::Compile(const char *expression)
     if(*it == ' ' || *it == '\t' || *it == '\r' || *it == '\n' || *it == '\\') continue;
     buffer.Append(*it);
   }
-  buffer.ReplaceAll("pt", "x");
-  buffer.ReplaceAll("eta", "y");
-  buffer.ReplaceAll("phi", "z");
-  buffer.ReplaceAll("energy", "t");
+
   buffer.ReplaceAll("d0", "[0]");
   buffer.ReplaceAll("dz", "[1]");
   buffer.ReplaceAll("ctgTheta", "[2]");
   buffer.ReplaceAll("radius", "[3]");
   buffer.ReplaceAll("density", "[4]");
+
+  buffer.ReplaceAll("pt", "x");
+  buffer.ReplaceAll("eta", "y");
+  buffer.ReplaceAll("phi", "z");
+  buffer.ReplaceAll("energy", "t");
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 3, 0)
   TFormula::SetMaxima(100000, 1000, 1000000);
@@ -83,14 +85,15 @@ Double_t DelphesFormula::Eval(Double_t pt, Double_t eta, Double_t phi, Double_t 
 {
 
   Double_t d0 = 0., dz = 0., ctgTheta = 0., radius = 0., density = 0.;
-  if (candidate) {
+  if(candidate)
+  {
     d0 = candidate->D0;
     dz = candidate->DZ;
     ctgTheta = candidate->CtgTheta;
     radius = candidate->Position.Pt();
     density = candidate->ParticleDensity;
   }
-    
+
   Double_t x[4] = {pt, eta, phi, energy};
   Double_t params[5] = {d0, dz, ctgTheta, radius, density};
   return EvalPar(x, params);

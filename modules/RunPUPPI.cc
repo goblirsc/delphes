@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -20,9 +21,7 @@ using namespace std;
 using namespace fastjet;
 
 //------------------------------------------------------------------------------
-RunPUPPI::RunPUPPI() :
-  fItTrackInputArray(0),
-  fItNeutralInputArray(0)
+RunPUPPI::RunPUPPI()
 {
 }
 
@@ -35,11 +34,11 @@ void RunPUPPI::Init()
 {
   // input collection
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "Calorimeter/towers"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
   fNeutralInputArray = ImportArray(GetString("NeutralInputArray", "Calorimeter/towers"));
-  fItNeutralInputArray = fNeutralInputArray->MakeIterator();
+  fItNeutralInputArray.reset(fNeutralInputArray->MakeIterator());
   fPVInputArray = ImportArray(GetString("PVInputArray", "PV"));
-  fPVItInputArray = fPVInputArray->MakeIterator();
+  fPVItInputArray.reset(fPVInputArray->MakeIterator());
   // puppi parameters
   fApplyNoLep = GetBool("UseNoLep", true);
   fMinPuppiWeight = GetDouble("MinPuppiWeight", 0.01);
@@ -140,16 +139,13 @@ void RunPUPPI::Init()
     //if(std::find(puppiAlgo.begin(),puppiAlgo.end(),algoTmp) != puppiAlgo.end()) continue;
     puppiAlgo.push_back(algoTmp);
   }
-  fPuppi = new PuppiContainer(true, fUseExp, fMinPuppiWeight, puppiAlgo);
+  fPuppi = make_unique<PuppiContainer>(true, fUseExp, fMinPuppiWeight, puppiAlgo);
 }
 
 //------------------------------------------------------------------------------
 
 void RunPUPPI::Finish()
 {
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  if(fItNeutralInputArray) delete fItNeutralInputArray;
-  if(fPuppi) delete fPuppi;
 }
 
 //------------------------------------------------------------------------------
@@ -267,7 +263,7 @@ void RunPUPPI::Process()
   // Loop on final particles
   for(std::vector<PseudoJet>::iterator it = puppiParticles.begin(); it != puppiParticles.end(); it++)
   {
-    if(it->user_index() <= int(InputParticles.size()))
+    if(it->user_index() < int(InputParticles.size()))
     {
       candidate = static_cast<Candidate *>(InputParticles.at(it->user_index())->Clone());
       candidate->Momentum.SetPxPyPzE(it->px(), it->py(), it->pz(), it->e());

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -41,8 +42,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-VertexSorter::VertexSorter() :
-  fInputArray(NULL), fTrackInputArray(NULL), fItTrackInputArray(NULL), fJetInputArray(NULL), fItJetInputArray(NULL), fOutputArray(NULL)
+VertexSorter::VertexSorter()
 {
 }
 
@@ -59,12 +59,12 @@ void VertexSorter::Init()
   fInputArray = ImportArray(GetString("InputArray", "VertexFinder/vertices"));
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "VertexFinder/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   if(string(GetString("JetInputArray", "")) != "")
   {
     fJetInputArray = ImportArray(GetString("JetInputArray", ""));
-    fItJetInputArray = fJetInputArray->MakeIterator();
+    fItJetInputArray.reset(fJetInputArray->MakeIterator());
   }
 
   // import beamspot
@@ -86,8 +86,6 @@ void VertexSorter::Init()
 
 void VertexSorter::Finish()
 {
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  if(fItJetInputArray) delete fItJetInputArray;
 }
 
 //------------------------------------------------------------------------------

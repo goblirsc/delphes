@@ -44,23 +44,22 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
 using namespace std;
 //------------------------------------------------------------------------------
 
-TimeSmearing::TimeSmearing() :
-  fResolutionFormula(0), fItInputArray(0)
+TimeSmearing::TimeSmearing()
 {
-	fResolutionFormula = new DelphesFormula;
+  fResolutionFormula = make_unique<DelphesFormula>();
 }
 
 //------------------------------------------------------------------------------
 
 TimeSmearing::~TimeSmearing()
 {
-	if(fResolutionFormula) delete fResolutionFormula;
 }
 
 //------------------------------------------------------------------------------
@@ -74,8 +73,7 @@ void TimeSmearing::Init()
 
   // import track input array
   fInputArray = ImportArray(GetString("InputArray", "MuonMomentumSmearing/muons"));
-  fItInputArray = fInputArray->MakeIterator();
-
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array
   fOutputArray = ExportArray(GetString("OutputArray", "tracks"));
@@ -85,7 +83,6 @@ void TimeSmearing::Init()
 
 void TimeSmearing::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------
