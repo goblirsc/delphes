@@ -30,10 +30,8 @@
 
 #include "classes/DelphesModule.h"
 
-class TFolder;
-class TObjArray;
-
-class ExRootTreeWriter;
+class TIterator;
+class TList;
 
 class DelphesFactory;
 
@@ -43,18 +41,24 @@ public:
   Delphes(const char *name = "Delphes");
   ~Delphes();
 
-  void SetTreeWriter(ExRootTreeWriter *treeWriter);
+  void Clear(Option_t *option = "");
 
-  DelphesFactory *GetFactory() const { return fFactory; }
+  void Init();
+  void Process();
+  void Finish();
 
-  void Clear();
+  [[deprecated("InitTask has been renamed to Init")]]
+  void InitTask() { Init(); }
+  [[deprecated("ProcessTask has been renamed to Process")]]
+  void ProcessTask() { Process(); }
+  [[deprecated("FinishTask has been renamed to Finish")]]
+  void FinishTask() { Finish(); }
 
-  virtual void Init();
-  virtual void Process();
-  virtual void Finish();
+  void AddModule(const char *className, const char *moduleName);
 
 private:
-  DelphesFactory *fFactory;
+  TIterator *fItModules = nullptr; //!
+  TList *fModules = nullptr; //!
 
   ClassDef(Delphes, 1)
 };

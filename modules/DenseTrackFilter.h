@@ -30,6 +30,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -50,7 +51,7 @@ public:
 private:
   typedef std::map<Double_t, std::set<Double_t> > TBinMap; //!
 
-  Candidate *fBestTrack;
+  Candidate *fBestTrack = nullptr;
 
   Int_t fTowerTrackHits;
 
@@ -59,18 +60,18 @@ private:
   TBinMap fBinMap; //!
 
   std::vector<Double_t> fEtaBins;
-  std::vector<std::vector<Double_t> *> fPhiBins;
+  std::vector<std::unique_ptr<std::vector<Double_t> > > fPhiBins;
 
   std::vector<Long64_t> fTowerHits;
 
-  TIterator *fItTrackInputArray; //!
+  std::unique_ptr<TIterator> fItTrackInputArray; //!
 
-  const TObjArray *fTrackInputArray; //!
-  TObjArray *fTrackOutputArray; //!
+  const TObjArray *fTrackInputArray = nullptr; //!
+  TObjArray *fTrackOutputArray = nullptr; //!
 
-  TObjArray *fChargedHadronOutputArray; //!
-  TObjArray *fElectronOutputArray; //!
-  TObjArray *fMuonOutputArray; //!
+  TObjArray *fChargedHadronOutputArray = nullptr; //!
+  TObjArray *fElectronOutputArray = nullptr; //!
+  TObjArray *fMuonOutputArray = nullptr; //!
 
   void FillTrack();
   ClassDef(DenseTrackFilter, 1)

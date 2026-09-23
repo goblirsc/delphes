@@ -47,6 +47,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -54,11 +55,10 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-PhotonConversions::PhotonConversions() :
-  fItInputArray(0), fConversionMap(0), fDecayXsec(0)
+PhotonConversions::PhotonConversions()
 {
-  fDecayXsec = new TF1("decayXsec", "1.0 - 4.0/3.0 * x * (1.0 - x)", 0.0, 1.0);
-  fConversionMap = new DelphesCylindricalFormula;
+  fDecayXsec = make_unique<TF1>("decayXsec", "1.0 - 4.0/3.0 * x * (1.0 - x)", 0.0, 1.0);
+  fConversionMap = make_unique<DelphesCylindricalFormula>();
 }
 
 //------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ void PhotonConversions::Init()
   // import array with output from filter/classifier module
 
   fInputArray = ImportArray(GetString("InputArray", "Delphes/stableParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output arrays
 
@@ -97,9 +97,6 @@ void PhotonConversions::Init()
 
 void PhotonConversions::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
-  if(fDecayXsec) delete fDecayXsec;
-  if(fConversionMap) delete fConversionMap;
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +109,7 @@ void PhotonConversions::Process()
   Double_t px, py, pz, pt, pt2, e, eta, phi;
   Double_t x, y, z, t;
   Double_t x_t, y_t, z_t, r_t;
-  Double_t x_i, y_i, z_i, r_i, phi_i;
+  Double_t x_i, y_i, z_i, rho_i, phi_i;
   Double_t dt, t1, t2, t3, t4;
   Double_t tmp, discr, discr2;
   Int_t nsteps, i;
@@ -200,11 +197,11 @@ void PhotonConversions::Process()
 
         // convert photon position into cylindrical coordinates, cylindrical r,phi,z !!
 
-        r_i = TMath::Sqrt(x_i * x_i + y_i * y_i);
+        rho_i = TMath::Sqrt(x_i * x_i + y_i * y_i);
         phi_i = pos_i.Phi();
 
         // read conversion rate/meter from card
-        rate = fConversionMap->Eval(r_i, phi_i, z_i);
+        rate = fConversionMap->Eval(rho_i, phi_i, z_i);
 
         // convert into conversion probability
         p_conv = 1 - TMath::Exp(-7.0 / 9.0 * fStep * rate);

@@ -33,7 +33,7 @@
 #include <map>
 #include <vector>
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
@@ -54,7 +54,7 @@ static const int kBufferSize = 16384;
 //---------------------------------------------------------------------------
 
 DelphesHepMC3Reader::DelphesHepMC3Reader() :
-  fInputFile(0), fBuffer(0), fPDG(0),
+  fInputFile(0), fIsOwner(false), fBuffer(0), fPDG(0),
   fVertexCounter(-2), fParticleCounter(-1)
 {
   fBuffer = new char[kBufferSize];
@@ -67,6 +67,38 @@ DelphesHepMC3Reader::DelphesHepMC3Reader() :
 DelphesHepMC3Reader::~DelphesHepMC3Reader()
 {
   if(fBuffer) delete[] fBuffer;
+  CloseInputFile();
+}
+
+//---------------------------------------------------------------------------
+
+void DelphesHepMC3Reader::OpenInputFile(const char *inputFileName)
+{
+  FILE *inputFile;
+  stringstream message;
+
+  inputFile = fopen(inputFileName, "r");
+
+  if(inputFile == NULL)
+  {
+    message << "can't open " << inputFileName;
+    throw runtime_error(message.str());
+  }
+
+  SetInputFile(inputFile);
+  fIsOwner = true;
+}
+
+//---------------------------------------------------------------------------
+
+void DelphesHepMC3Reader::CloseInputFile()
+{
+  if(fInputFile && fIsOwner)
+  {
+    fclose(fInputFile);
+    fInputFile = 0;
+    fIsOwner = false;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -78,7 +110,7 @@ void DelphesHepMC3Reader::SetInputFile(FILE *inputFile)
 
 //---------------------------------------------------------------------------
 
-void DelphesHepMC3Reader::Clear()
+void DelphesHepMC3Reader::Clear(Option_t * /*option*/)
 {
   fWeights.clear();
   fMomentumCoefficient = 1.0;
@@ -102,7 +134,7 @@ bool DelphesHepMC3Reader::EventReady()
 
 //---------------------------------------------------------------------------
 
-bool DelphesHepMC3Reader::ReadBlock(DelphesFactory *factory,
+bool DelphesHepMC3Reader::ReadEvent(DelphesFactory *factory,
   TObjArray *allParticleOutputArray,
   TObjArray *stableParticleOutputArray,
   TObjArray *partonOutputArray)
@@ -112,226 +144,213 @@ bool DelphesHepMC3Reader::ReadBlock(DelphesFactory *factory,
   int rc, code;
   double weight;
 
-  if(!fgets(fBuffer, kBufferSize, fInputFile)) return kFALSE;
-
-  DelphesStream bufferStream(fBuffer + 1);
-
-  key = fBuffer[0];
-
-  if(key == 'E')
+  while(!EventReady())
   {
-    Clear();
+    if(!fgets(fBuffer, kBufferSize, fInputFile)) return kFALSE;
 
-    rc = bufferStream.ReadInt(fEventNumber)
-      && bufferStream.ReadInt(fVertexCounter)
-      && bufferStream.ReadInt(fParticleCounter);
+    DelphesStream bufferStream(fBuffer + 1);
 
-    if(!rc)
+    key = fBuffer[0];
+
+    if(key == 'E')
     {
-      cerr << "** ERROR: "
-           << "invalid event format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'U')
-  {
-    rc = sscanf(fBuffer + 1, "%3s %2s", momentumUnit, positionUnit);
+      Clear();
 
-    if(rc != 2)
-    {
-      cerr << "** ERROR: "
-           << "invalid units format" << endl;
-      return kFALSE;
-    }
-
-    if(strncmp(momentumUnit, "GEV", 3) == 0)
-    {
-      fMomentumCoefficient = 1.0;
-    }
-    else if(strncmp(momentumUnit, "MEV", 3) == 0)
-    {
-      fMomentumCoefficient = 0.001;
-    }
-
-    if(strncmp(positionUnit, "MM", 3) == 0)
-    {
-      fPositionCoefficient = 1.0;
-    }
-    else if(strncmp(positionUnit, "CM", 3) == 0)
-    {
-      fPositionCoefficient = 10.0;
-    }
-  }
-  else if(key == 'W')
-  {
-    while(bufferStream.ReadDbl(weight))
-    {
-      fWeights.push_back(weight);
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("mpi"))
-  {
-    rc = bufferStream.ReadInt(fMPI);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid MPI format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("signal_process_id"))
-  {
-    rc = bufferStream.ReadInt(fProcessID);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid process ID format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("event_scale"))
-  {
-    rc = bufferStream.ReadDbl(fScale);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid event scale format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("alphaQCD"))
-  {
-    rc = bufferStream.ReadDbl(fAlphaQCD);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid alphaQCD format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("alphaQED"))
-  {
-    rc = bufferStream.ReadDbl(fAlphaQED);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid alphaQED format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("GenCrossSection"))
-  {
-    rc = bufferStream.ReadDbl(fCrossSection)
-      && bufferStream.ReadDbl(fCrossSectionError);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid cross section format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'A' && bufferStream.FindStr("GenPdfInfo"))
-  {
-    rc = bufferStream.ReadInt(fID1)
-      && bufferStream.ReadInt(fID2)
-      && bufferStream.ReadDbl(fX1)
-      && bufferStream.ReadDbl(fX2)
-      && bufferStream.ReadDbl(fScalePDF)
-      && bufferStream.ReadDbl(fPDF1)
-      && bufferStream.ReadDbl(fPDF2);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid PDF format" << endl;
-      return kFALSE;
-    }
-  }
-  else if(key == 'V')
-  {
-    fParticles.clear();
-
-    fX = 0.0;
-    fY = 0.0;
-    fZ = 0.0;
-    fT = 0.0;
-
-    rc = bufferStream.ReadInt(fVertexCode)
-      && bufferStream.ReadInt(fVertexStatus);
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid vertex format" << endl;
-      return kFALSE;
-    }
-
-    rc = bufferStream.FindChr('[');
-
-    if(!rc)
-    {
-      cerr << "** ERROR: "
-           << "invalid vertex format" << endl;
-      return kFALSE;
-    }
-
-    while(bufferStream.ReadInt(code))
-    {
-      fParticles.push_back(code);
-      bufferStream.FindChr(',');
-    }
-
-    if(bufferStream.FindChr('@'))
-    {
-      rc = bufferStream.ReadDbl(fX)
-        && bufferStream.ReadDbl(fY)
-        && bufferStream.ReadDbl(fZ)
-        && bufferStream.ReadDbl(fT);
+      rc = bufferStream.ReadInt(fEventNumber)
+        && bufferStream.ReadInt(fVertexCounter)
+        && bufferStream.ReadInt(fParticleCounter);
 
       if(!rc)
       {
-        cerr << "** ERROR: "
-             << "invalid vertex format" << endl;
+        cerr << "** ERROR: invalid event format" << endl;
         return kFALSE;
       }
     }
-
-    AnalyzeVertex(factory, fVertexCode);
-  }
-  else if(key == 'P' && fParticleCounter > 0)
-  {
-    --fParticleCounter;
-
-    rc = bufferStream.ReadInt(fParticleCode)
-      && bufferStream.ReadInt(fOutVertexCode)
-      && bufferStream.ReadInt(fPID)
-      && bufferStream.ReadDbl(fPx)
-      && bufferStream.ReadDbl(fPy)
-      && bufferStream.ReadDbl(fPz)
-      && bufferStream.ReadDbl(fE)
-      && bufferStream.ReadDbl(fMass)
-      && bufferStream.ReadInt(fParticleStatus);
-
-    if(!rc)
+    else if(key == 'U')
     {
-      cerr << "** ERROR: "
-           << "invalid particle format" << endl;
-      return kFALSE;
+      rc = sscanf(fBuffer + 1, "%3s %2s", momentumUnit, positionUnit);
+
+      if(rc != 2)
+      {
+        cerr << "** ERROR: invalid units format" << endl;
+        return kFALSE;
+      }
+
+      if(strncmp(momentumUnit, "GEV", 3) == 0)
+      {
+        fMomentumCoefficient = 1.0;
+      }
+      else if(strncmp(momentumUnit, "MEV", 3) == 0)
+      {
+        fMomentumCoefficient = 0.001;
+      }
+
+      if(strncmp(positionUnit, "MM", 2) == 0)
+      {
+        fPositionCoefficient = 1.0;
+      }
+      else if(strncmp(positionUnit, "CM", 2) == 0)
+      {
+        fPositionCoefficient = 10.0;
+      }
     }
+    else if(key == 'W')
+    {
+      while(bufferStream.ReadDbl(weight))
+      {
+        fWeights.push_back(weight);
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("mpi"))
+    {
+      rc = bufferStream.ReadInt(fMPI);
 
-    AnalyzeParticle(factory);
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid MPI format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("signal_process_id"))
+    {
+      rc = bufferStream.ReadInt(fProcessID);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid process ID format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("event_scale"))
+    {
+      rc = bufferStream.ReadDbl(fScale);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid event scale format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("alphaQCD"))
+    {
+      rc = bufferStream.ReadDbl(fAlphaQCD);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid alphaQCD format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("alphaQED"))
+    {
+      rc = bufferStream.ReadDbl(fAlphaQED);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid alphaQED format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("GenCrossSection"))
+    {
+      rc = bufferStream.ReadDbl(fCrossSection)
+        && bufferStream.ReadDbl(fCrossSectionError);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid cross section format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'A' && bufferStream.FindStr("GenPdfInfo"))
+    {
+      rc = bufferStream.ReadInt(fID1)
+        && bufferStream.ReadInt(fID2)
+        && bufferStream.ReadDbl(fX1)
+        && bufferStream.ReadDbl(fX2)
+        && bufferStream.ReadDbl(fScalePDF)
+        && bufferStream.ReadDbl(fPDF1)
+        && bufferStream.ReadDbl(fPDF2);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid PDF format" << endl;
+        return kFALSE;
+      }
+    }
+    else if(key == 'V')
+    {
+      fParticles.clear();
+
+      fX = 0.0;
+      fY = 0.0;
+      fZ = 0.0;
+      fT = 0.0;
+
+      rc = bufferStream.ReadInt(fVertexCode)
+        && bufferStream.ReadInt(fVertexStatus);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid vertex format" << endl;
+        return kFALSE;
+      }
+
+      rc = bufferStream.FindChr('[');
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid vertex format" << endl;
+        return kFALSE;
+      }
+
+      while(bufferStream.ReadInt(code))
+      {
+        fParticles.push_back(code);
+        bufferStream.FindChr(',');
+      }
+
+      if(bufferStream.FindChr('@'))
+      {
+        rc = bufferStream.ReadDbl(fX)
+          && bufferStream.ReadDbl(fY)
+          && bufferStream.ReadDbl(fZ)
+          && bufferStream.ReadDbl(fT);
+
+        if(!rc)
+        {
+          cerr << "** ERROR: invalid vertex format" << endl;
+          return kFALSE;
+        }
+      }
+
+      AnalyzeVertex(factory, fVertexCode);
+    }
+    else if(key == 'P' && fParticleCounter > 0)
+    {
+      --fParticleCounter;
+
+      rc = bufferStream.ReadInt(fParticleCode)
+        && bufferStream.ReadInt(fOutVertexCode)
+        && bufferStream.ReadInt(fPID)
+        && bufferStream.ReadDbl(fPx)
+        && bufferStream.ReadDbl(fPy)
+        && bufferStream.ReadDbl(fPz)
+        && bufferStream.ReadDbl(fE)
+        && bufferStream.ReadDbl(fMass)
+        && bufferStream.ReadInt(fParticleStatus);
+
+      if(!rc)
+      {
+        cerr << "** ERROR: invalid particle format" << endl;
+        return kFALSE;
+      }
+
+      AnalyzeParticle(factory);
+    }
   }
 
-  if(EventReady())
-  {
-    FinalizeParticles(allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
-  }
+  FinalizeParticles(allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
 
   return kTRUE;
 }
@@ -363,8 +382,8 @@ void DelphesHepMC3Reader::AnalyzeEvent(ExRootTreeBranch *branch, long long /*eve
   element->PDF1 = fPDF1;
   element->PDF2 = fPDF2;
 
-  element->ReadTime = readStopWatch->RealTime();
-  element->ProcTime = procStopWatch->RealTime();
+  element->ReadTime = readStopWatch ? readStopWatch->RealTime() : 0;
+  element->ProcTime = procStopWatch ? procStopWatch->RealTime() : 0;
 }
 
 //---------------------------------------------------------------------------
@@ -460,7 +479,7 @@ void DelphesHepMC3Reader::FinalizeParticles(TObjArray *allParticleOutputArray,
   Candidate *candidateDaughter;
   TParticlePDG *pdgParticle;
   int pdgCode;
-  map<int, int >::iterator itVertexMap;
+  map<int, int>::iterator itVertexMap;
   map<int, pair<int, int> >::iterator itMotherMap;
   map<int, pair<int, int> >::iterator itDaughterMap;
   size_t i;
@@ -575,7 +594,7 @@ void DelphesHepMC3Reader::FinalizeParticles(TObjArray *allParticleOutputArray,
         candidate->D1 = -1;
         candidate->D2 = -1;
         const TLorentzVector &decayPosition = candidate->Position;
-        candidate->DecayPosition.SetXYZT(decayPosition.X(), decayPosition.Y(), decayPosition.Z(), decayPosition.T());// decay position
+        candidate->DecayPosition.SetXYZT(decayPosition.X(), decayPosition.Y(), decayPosition.Z(), decayPosition.T()); // decay position
       }
       else
       {
@@ -583,7 +602,7 @@ void DelphesHepMC3Reader::FinalizeParticles(TObjArray *allParticleOutputArray,
         candidate->D2 = itDaughterMap->second.second;
         candidateDaughter = static_cast<Candidate *>(allParticleOutputArray->At(candidate->D1));
         const TLorentzVector &decayPosition = candidateDaughter->Position;
-        candidate->DecayPosition.SetXYZT(decayPosition.X(), decayPosition.Y(), decayPosition.Z(), decayPosition.T());// decay position
+        candidate->DecayPosition.SetXYZT(decayPosition.X(), decayPosition.Y(), decayPosition.Z(), decayPosition.T()); // decay position
       }
     }
   }

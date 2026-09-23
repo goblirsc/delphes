@@ -27,8 +27,10 @@
  *
  */
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
+
+#include "TObject.h"
 
 #include "classes/DelphesXDRReader.h"
 
@@ -39,7 +41,7 @@ class ExRootTreeBranch;
 class DelphesFactory;
 class DelphesXDRReader;
 
-class DelphesSTDHEPReader
+class DelphesSTDHEPReader: public TObject
 {
 public:
   enum STDHEPBlock
@@ -57,18 +59,32 @@ public:
   DelphesSTDHEPReader();
   ~DelphesSTDHEPReader();
 
+  void OpenInputFile(const char *inputFileName);
+  void CloseInputFile();
+
   void SetInputFile(FILE *inputFile);
 
-  void Clear();
+  void Clear(Option_t *option = "") override;
   bool EventReady();
 
-  bool ReadBlock(DelphesFactory *factory,
+  bool ReadEvent(DelphesFactory *factory,
     TObjArray *allParticleOutputArray,
     TObjArray *stableParticleOutputArray,
     TObjArray *partonOutputArray);
 
+  [[deprecated("ReadBlock has been renamed to ReadEvent")]]
+  bool ReadBlock(DelphesFactory *factory,
+    TObjArray *allParticleOutputArray,
+    TObjArray *stableParticleOutputArray,
+    TObjArray *partonOutputArray)
+  {
+    return ReadEvent(factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
+  }
+
   void AnalyzeEvent(ExRootTreeBranch *branch, long long eventNumber,
-    TStopwatch *readStopWatch, TStopwatch *procStopWatch);
+    TStopwatch *readStopWatch = 0, TStopwatch *procStopWatch = 0);
+
+  void AnalyzeWeight(ExRootTreeBranch *branch);
 
 private:
   void AnalyzeParticles(DelphesFactory *factory,
@@ -76,8 +92,8 @@ private:
     TObjArray *stableParticleOutputArray,
     TObjArray *partonOutputArray);
 
-  void SkipBytes(int size);
-  void SkipArray(int elsize);
+  void SkipBytes(uint32_t size);
+  void SkipArray(uint32_t elsize);
 
   void ReadFileHeader();
   void ReadEventTable();
@@ -87,6 +103,7 @@ private:
   void ReadSTDHEP4();
 
   FILE *fInputFile;
+  bool fIsOwner;
 
   DelphesXDRReader fReader[7];
 
@@ -94,12 +111,14 @@ private:
 
   TDatabasePDG *fPDG;
 
-  uint32_t fEntries;
-  int32_t fBlockType, fEventNumber, fEventSize;
+  int32_t fBlockType;
+  uint32_t fEntries, fEventNumber, fEventSize;
   double fWeight, fAlphaQCD, fAlphaQED;
 
   uint32_t fScaleSize;
   double fScale[10];
+
+  ClassDef(DelphesSTDHEPReader, 1)
 };
 
 #endif // DelphesSTDHEPReader_h

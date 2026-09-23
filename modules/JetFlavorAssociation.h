@@ -30,6 +30,7 @@
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesModule.h"
 #include <map>
+#include <memory>
 
 class TObjArray;
 class DelphesFormula;
@@ -54,21 +55,21 @@ public:
 private:
   Double_t fDeltaR;
 
-  PartonClassifier *fPartonClassifier; //!
-  ParticleLHEFClassifier *fParticleLHEFClassifier; //!
+  std::unique_ptr<PartonClassifier> fPartonClassifier; //!
+  std::unique_ptr<ParticleLHEFClassifier> fParticleLHEFClassifier; //!
 
-  ExRootFilter *fPartonFilter;
-  ExRootFilter *fParticleLHEFFilter;
+  std::unique_ptr<ExRootFilter> fPartonFilter; //!
+  std::unique_ptr<ExRootFilter> fParticleLHEFFilter; //!
 
-  TIterator *fItPartonInputArray; //!
-  TIterator *fItParticleInputArray; //!
-  TIterator *fItParticleLHEFInputArray; //!
-  TIterator *fItJetInputArray; //!
+  std::unique_ptr<TIterator> fItPartonInputArray; //!
+  std::unique_ptr<TIterator> fItParticleInputArray; //!
+  std::unique_ptr<TIterator> fItParticleLHEFInputArray; //!
+  std::unique_ptr<TIterator> fItJetInputArray; //!
 
-  const TObjArray *fPartonInputArray; //!
-  const TObjArray *fParticleInputArray; //!
-  const TObjArray *fParticleLHEFInputArray; //!
-  const TObjArray *fJetInputArray; //!
+  const TObjArray *fPartonInputArray = nullptr; //!
+  const TObjArray *fParticleInputArray = nullptr; //!
+  const TObjArray *fParticleLHEFInputArray = nullptr; //!
+  const TObjArray *fJetInputArray = nullptr; //!
 
   ClassDef(JetFlavorAssociation, 1)
 };

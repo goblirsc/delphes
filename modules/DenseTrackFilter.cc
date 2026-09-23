@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,8 +52,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-DenseTrackFilter::DenseTrackFilter() :
-  fItTrackInputArray(0)
+DenseTrackFilter::DenseTrackFilter()
 {
 }
 
@@ -85,11 +85,25 @@ void DenseTrackFilter::Init()
     paramPhiBins = param[i * 2 + 1];
     sizePhiBins = paramPhiBins.GetSize();
 
-    for(j = 0; j < sizeEtaBins; ++j)
+    if(sizePhiBins == 1)
     {
-      for(k = 0; k < sizePhiBins; ++k)
+      sizePhiBins = paramPhiBins.GetInt() / 2;
+      for(j = 0; j < sizeEtaBins; ++j)
       {
-        fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        for(k = -sizePhiBins; k <= sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(TMath::Pi() * k / sizePhiBins);
+        }
+      }
+    }
+    else
+    {
+      for(j = 0; j < sizeEtaBins; ++j)
+      {
+        for(k = 0; k < sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        }
       }
     }
   }
@@ -99,8 +113,8 @@ void DenseTrackFilter::Init()
   for(itEtaBin = fBinMap.begin(); itEtaBin != fBinMap.end(); ++itEtaBin)
   {
     fEtaBins.push_back(itEtaBin->first);
-    phiBins = new vector<double>(itEtaBin->second.size());
-    fPhiBins.push_back(phiBins);
+    fPhiBins.push_back(make_unique<vector<double> >(itEtaBin->second.size()));
+    phiBins = fPhiBins.back().get();
     phiBins->clear();
     for(itPhiBin = itEtaBin->second.begin(); itPhiBin != itEtaBin->second.end(); ++itPhiBin)
     {
@@ -112,7 +126,7 @@ void DenseTrackFilter::Init()
   fEtaPhiRes = GetDouble("EtaPhiRes", 0.003);
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "TrackMergerProp/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   fTrackOutputArray = ExportArray(GetString("TrackOutputArray", "tracks"));
   fChargedHadronOutputArray = ExportArray(GetString("ChargedHadronOutputArray", "chargedHadrons"));
@@ -124,12 +138,6 @@ void DenseTrackFilter::Init()
 
 void DenseTrackFilter::Finish()
 {
-  vector<vector<Double_t> *>::iterator itPhiBin;
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  for(itPhiBin = fPhiBins.begin(); itPhiBin != fPhiBins.end(); ++itPhiBin)
-  {
-    delete *itPhiBin;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -165,7 +173,7 @@ void DenseTrackFilter::Process()
     etaBin = distance(fEtaBins.begin(), itEtaBin);
 
     // phi bins for given eta bin
-    phiBins = fPhiBins[etaBin];
+    phiBins = fPhiBins[etaBin].get();
 
     // find phi bin [1, phiBins.size - 1]
     itPhiBin = lower_bound(phiBins->begin(), phiBins->end(), trackPosition.Phi());
@@ -194,7 +202,7 @@ void DenseTrackFilter::Process()
   {
     towerHit = (*itTowerHits);
     flags = (towerHit >> 24) & 0x00000000000000FFLL;
-    number = (towerHit)&0x0000000000FFFFFFLL;
+    number = (towerHit) & 0x0000000000FFFFFFLL;
     hitEtaPhi = towerHit >> 32;
 
     if(towerEtaPhi != hitEtaPhi)

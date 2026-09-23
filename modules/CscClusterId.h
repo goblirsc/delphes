@@ -29,6 +29,8 @@
  */
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TIterator;
 class TObjArray;
 class DelphesCscClusterFormula;
@@ -44,15 +46,15 @@ public:
   void Finish();
 
 private:
-  DelphesCscClusterFormula *fFormula; //!
-  DelphesCscClusterFormula *fEtaFormula; //!
+  std::unique_ptr<DelphesCscClusterFormula> fFormula; //!
+  std::unique_ptr<DelphesCscClusterFormula> fEtaFormula; //!
   Double_t fEtaCutMax;
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(CscClusterId, 1)
 };

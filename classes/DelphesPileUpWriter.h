@@ -27,8 +27,8 @@
  *
  */
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 class DelphesXDRWriter;
 
@@ -48,9 +48,9 @@ public:
   void WriteIndex();
 
 private:
-  int64_t fEntries;
-  int32_t fEntrySize;
-  int64_t fOffset;
+  uint64_t fEntries;
+  uint32_t fEntrySize;
+  uint64_t fOffset;
 
   FILE *fPileUpFile;
   uint8_t *fIndex;

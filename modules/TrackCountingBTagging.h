@@ -30,6 +30,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 
 class TObjArray;
 
@@ -53,11 +54,11 @@ private:
   Int_t fNtracks;
   Bool_t fUse3D;
 
-  TIterator *fItTrackInputArray; //!
-  TIterator *fItJetInputArray; //!
+  std::unique_ptr<TIterator> fItTrackInputArray; //!
+  std::unique_ptr<TIterator> fItJetInputArray; //!
 
-  const TObjArray *fTrackInputArray; //!
-  const TObjArray *fJetInputArray; //!
+  const TObjArray *fTrackInputArray = nullptr; //!
+  const TObjArray *fJetInputArray = nullptr; //!
 
   ClassDef(TrackCountingBTagging, 1)
 };

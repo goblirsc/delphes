@@ -12,6 +12,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -42,11 +43,11 @@ private:
   Int_t fMinNDF;
   Int_t fGrowSeeds;
 
-  TObjArray *fInputArray;
-  TIterator *fItInputArray;
+  TObjArray *fInputArray = nullptr;
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  TObjArray *fOutputArray;
-  TObjArray *fVertexOutputArray;
+  TObjArray *fOutputArray = nullptr;
+  TObjArray *fVertexOutputArray = nullptr;
 
   std::map<UInt_t, std::map<std::string, Double_t> > trackIDToDouble;
   std::map<UInt_t, std::map<std::string, Int_t> > trackIDToInt;

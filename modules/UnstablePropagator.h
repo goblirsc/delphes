@@ -29,6 +29,7 @@
  */
 
 #include "classes/DelphesModule.h"
+#include <memory>
 
 class TClonesArray;
 class TIterator;
@@ -51,11 +52,11 @@ private:
   Double_t fLmin; // minimum
 
   Bool_t fDebug;
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  std::vector < Int_t > DaughterIndices(Candidate *candidate);
+  std::vector<Int_t> DaughterIndices(Candidate *candidate);
   void PrintPart(TString prefix, Candidate *candidate);
   Double_t FlightDistance(Candidate *mother, Candidate *daughter);
   Int_t Index(Candidate *candidate);

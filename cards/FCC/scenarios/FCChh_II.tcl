@@ -307,7 +307,7 @@ module Merger TrackMerger {
 module Efficiency ForwardLooperTracks  {
   set InputArray TrackMerger/tracks
   set OutputArray tracks
-  set UseMomentumVector False
+  set UseMomentumVector false
 
   ## select looping tracks that end up in position |eta| > 6.000 (lost by calo)
   set EfficiencyFormula {
@@ -352,13 +352,7 @@ module DualReadoutCalorimeter Calorimeter {
 
     set pi [expr {acos(-1)}]
 
-    set nbins_phi [expr {$pi/$EtaPhiRes} ]
-    set nbins_phi [expr {int($nbins_phi)} ]
-
-    set PhiBins {}
-    for {set i -$nbins_phi} {$i <= $nbins_phi} {incr i} {
-      add PhiBins [expr {$i * $pi/$nbins_phi}]
-    }
+    set PhiBins [expr {int($pi/$EtaPhiRes) * 2}]
 
     set nbins_eta [expr {$EtaMax/$EtaPhiRes} ]
     set nbins_eta [expr {int($nbins_eta)} ]

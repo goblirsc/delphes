@@ -33,14 +33,16 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 
 using namespace std;
 
 //------------------------------------------------------------------------------
 
-class TrackCountingTauTaggingPartonClassifier : public ExRootClassifier
+class TrackCountingTauTaggingPartonClassifier: public ExRootClassifier
 {
 public:
   TrackCountingTauTaggingPartonClassifier(const TObjArray *array);
@@ -106,9 +108,7 @@ Int_t TrackCountingTauTaggingPartonClassifier::GetCategory(TObject *object)
 
 //------------------------------------------------------------------------------
 
-TrackCountingTauTagging::TrackCountingTauTagging() :
-  fClassifier(0), fFilter(0),
-  fItPartonInputArray(0), fItTrackInputArray(0), fItJetInputArray(0)
+TrackCountingTauTagging::TrackCountingTauTagging()
 {
 }
 
@@ -122,9 +122,9 @@ TrackCountingTauTagging::~TrackCountingTauTagging()
 
 void TrackCountingTauTagging::Init()
 {
-  map<Int_t, DelphesFormula *>::iterator itEfficiencyMap;
+  map<Int_t, unique_ptr<DelphesFormula> >::iterator itEfficiencyMap;
   ExRootConfParam param;
-  DelphesFormula *formula;
+  unique_ptr<DelphesFormula> formula;
   Int_t i, size;
 
   fBitNumber = GetInt("BitNumber", 0);
@@ -140,60 +140,46 @@ void TrackCountingTauTagging::Init()
   fEfficiencyMap.clear();
   for(i = 0; i < size / 2; ++i)
   {
-    formula = new DelphesFormula;
+    formula = make_unique<DelphesFormula>();
     formula->Compile(param[i * 2 + 1].GetString());
 
-    fEfficiencyMap[param[i * 2].GetInt()] = formula;
+    fEfficiencyMap[param[i * 2].GetInt()] = move(formula);
   }
 
   // set default efficiency formula
   itEfficiencyMap = fEfficiencyMap.find(0);
   if(itEfficiencyMap == fEfficiencyMap.end())
   {
-    formula = new DelphesFormula;
+    formula = make_unique<DelphesFormula>();
     formula->Compile("0.0");
 
-    fEfficiencyMap[0] = formula;
+    fEfficiencyMap[0] = move(formula);
   }
 
   // import input array(s)
 
   fParticleInputArray = ImportArray(GetString("ParticleInputArray", "Delphes/allParticles"));
 
-  fClassifier = new TrackCountingTauTaggingPartonClassifier(fParticleInputArray);
+  fClassifier = make_unique<TrackCountingTauTaggingPartonClassifier>(fParticleInputArray);
   fClassifier->fPTMin = GetDouble("TauPTMin", 1.0);
   fClassifier->fEtaMax = GetDouble("TauEtaMax", 2.5);
 
   fPartonInputArray = ImportArray(GetString("PartonInputArray", "Delphes/partons"));
-  fItPartonInputArray = fPartonInputArray->MakeIterator();
+  fItPartonInputArray.reset(fPartonInputArray->MakeIterator());
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "TrackMerger/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
-  fFilter = new ExRootFilter(fPartonInputArray);
+  fFilter = make_unique<ExRootFilter>(fPartonInputArray);
 
   fJetInputArray = ImportArray(GetString("JetInputArray", "FastJetFinder/jets"));
-  fItJetInputArray = fJetInputArray->MakeIterator();
+  fItJetInputArray.reset(fJetInputArray->MakeIterator());
 }
 
 //------------------------------------------------------------------------------
 
 void TrackCountingTauTagging::Finish()
 {
-  map<Int_t, DelphesFormula *>::iterator itEfficiencyMap;
-  DelphesFormula *formula;
-
-  if(fFilter) delete fFilter;
-  if(fClassifier) delete fClassifier;
-  if(fItJetInputArray) delete fItJetInputArray;
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  if(fItPartonInputArray) delete fItPartonInputArray;
-
-  for(itEfficiencyMap = fEfficiencyMap.begin(); itEfficiencyMap != fEfficiencyMap.end(); ++itEfficiencyMap)
-  {
-    formula = itEfficiencyMap->second;
-    if(formula) delete formula;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -204,13 +190,13 @@ void TrackCountingTauTagging::Process()
   TLorentzVector tauMomentum;
   Double_t pt, eta, phi, e;
   TObjArray *tauArray;
-  map<Int_t, DelphesFormula *>::iterator itEfficiencyMap;
+  map<Int_t, unique_ptr<DelphesFormula> >::iterator itEfficiencyMap;
   DelphesFormula *formula;
   Int_t charge, i, identifier;
 
   // select taus
   fFilter->Reset();
-  tauArray = fFilter->GetSubArray(fClassifier, 0);
+  tauArray = fFilter->GetSubArray(fClassifier.get(), 0);
 
   if(tauArray == 0) return;
 
@@ -280,7 +266,7 @@ void TrackCountingTauTagging::Process()
     {
       itEfficiencyMap = fEfficiencyMap.find(0);
     }
-    formula = itEfficiencyMap->second;
+    formula = itEfficiencyMap->second.get();
 
     // apply an efficency formula
 

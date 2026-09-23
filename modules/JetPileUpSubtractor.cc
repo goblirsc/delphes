@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,8 +52,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-JetPileUpSubtractor::JetPileUpSubtractor() :
-  fItJetInputArray(0), fItRhoInputArray(0)
+JetPileUpSubtractor::JetPileUpSubtractor()
 {
 }
 
@@ -71,10 +71,10 @@ void JetPileUpSubtractor::Init()
   // import input array(s)
 
   fJetInputArray = ImportArray(GetString("JetInputArray", "FastJetFinder/jets"));
-  fItJetInputArray = fJetInputArray->MakeIterator();
+  fItJetInputArray.reset(fJetInputArray->MakeIterator());
 
   fRhoInputArray = ImportArray(GetString("RhoInputArray", "Rho/rho"));
-  fItRhoInputArray = fRhoInputArray->MakeIterator();
+  fItRhoInputArray.reset(fRhoInputArray->MakeIterator());
 
   // create output array(s)
 
@@ -85,8 +85,6 @@ void JetPileUpSubtractor::Init()
 
 void JetPileUpSubtractor::Finish()
 {
-  if(fItRhoInputArray) delete fItRhoInputArray;
-  if(fItJetInputArray) delete fItJetInputArray;
 }
 
 //------------------------------------------------------------------------------

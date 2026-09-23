@@ -11,6 +11,7 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
 #include <vector>
 
 class TObjArray;
@@ -34,22 +35,25 @@ private:
   Bool_t fVerbose;
   Double_t fMinPT;
 
-  Float_t fVertexSpaceSize;
-  Float_t fVertexTimeSize;
+  Double_t fVertexSpaceSize;
+  Double_t fVertexTimeSize;
   Bool_t fUseTc;
-  Float_t fBetaMax;
-  Float_t fBetaStop;
+  Double_t fBetaMax;
+  Double_t fBetaStop;
   Double_t fCoolingFactor;
   Int_t fMaxIterations;
   Double_t fDzCutOff;
   Double_t fD0CutOff;
   Double_t fDtCutOff; // for when the beamspot has time
 
-  TObjArray *fInputArray;
-  TIterator *fItInputArray;
+  std::unique_ptr<TObjArray> fClusterArray; //!
+  std::unique_ptr<TIterator> fItClusterArray; //!
 
-  TObjArray *fOutputArray;
-  TObjArray *fVertexOutputArray;
+  TObjArray *fInputArray = nullptr;
+  std::unique_ptr<TIterator> fItInputArray; //!
+
+  TObjArray *fOutputArray = nullptr;
+  TObjArray *fVertexOutputArray = nullptr;
 
   ClassDef(VertexFinderDA4D, 1)
 };

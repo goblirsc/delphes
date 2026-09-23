@@ -30,16 +30,16 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 #include "classes/DelphesXDRReader.h"
 
 using namespace std;
 
-static const int kIndexSize = 10000000;
-static const int kBufferSize = 1000000;
-static const int kRecordSize = 9;
+static const uint32_t kIndexSize = 10000000;
+static const uint32_t kBufferSize = 1000000;
+static const uint32_t kRecordSize = 9;
 
 //------------------------------------------------------------------------------
 
@@ -121,9 +121,9 @@ bool DelphesPileUpReader::ReadParticle(int32_t &pid,
 
 //------------------------------------------------------------------------------
 
-bool DelphesPileUpReader::ReadEntry(int64_t entry)
+bool DelphesPileUpReader::ReadEntry(uint64_t entry)
 {
-  int64_t offset;
+  uint64_t offset;
 
   if(entry >= fEntries) return false;
 

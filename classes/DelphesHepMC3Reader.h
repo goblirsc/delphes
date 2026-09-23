@@ -30,7 +30,9 @@
 #include <map>
 #include <vector>
 
-#include <stdio.h>
+#include <cstdio>
+
+#include "TObject.h"
 
 class TObjArray;
 class TStopwatch;
@@ -40,24 +42,36 @@ class ExRootTreeBranch;
 class DelphesFactory;
 class Candidate;
 
-class DelphesHepMC3Reader
+class DelphesHepMC3Reader: public TObject
 {
 public:
   DelphesHepMC3Reader();
   ~DelphesHepMC3Reader();
 
+  void OpenInputFile(const char *inputFileName);
+  void CloseInputFile();
+
   void SetInputFile(FILE *inputFile);
 
-  void Clear();
+  void Clear(Option_t *option = "") override;
   bool EventReady();
 
-  bool ReadBlock(DelphesFactory *factory,
+  bool ReadEvent(DelphesFactory *factory,
     TObjArray *allParticleOutputArray,
     TObjArray *stableParticleOutputArray,
     TObjArray *partonOutputArray);
 
+  [[deprecated("ReadBlock has been renamed to ReadEvent")]]
+  bool ReadBlock(DelphesFactory *factory,
+    TObjArray *allParticleOutputArray,
+    TObjArray *stableParticleOutputArray,
+    TObjArray *partonOutputArray)
+  {
+    return ReadEvent(factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray);
+  }
+
   void AnalyzeEvent(ExRootTreeBranch *branch, long long eventNumber,
-    TStopwatch *readStopWatch, TStopwatch *procStopWatch);
+    TStopwatch *readStopWatch = 0, TStopwatch *procStopWatch = 0);
 
   void AnalyzeWeight(ExRootTreeBranch *branch);
 
@@ -71,12 +85,13 @@ private:
     TObjArray *partonOutputArray);
 
   FILE *fInputFile;
+  bool fIsOwner;
 
   char *fBuffer;
 
   TDatabasePDG *fPDG;
 
-  int fEventNumber, fMPI, fProcessID, fSignalCode, fVertexCounter, fParticleCounter;
+  int fEventNumber, fMPI, fProcessID, fVertexCounter, fParticleCounter;
   double fScale, fAlphaQCD, fAlphaQED;
 
   double fMomentumCoefficient, fPositionCoefficient;
@@ -102,6 +117,8 @@ private:
 
   std::map<int, std::pair<int, int> > fMotherMap;
   std::map<int, std::pair<int, int> > fDaughterMap;
+
+  ClassDef(DelphesHepMC3Reader, 1)
 };
 
 #endif // DelphesHepMC3Reader_h

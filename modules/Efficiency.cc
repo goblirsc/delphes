@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,17 +52,15 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-Efficiency::Efficiency() :
-  fFormula(0), fItInputArray(0)
+Efficiency::Efficiency()
 {
-  fFormula = new DelphesFormula;
+  fFormula = make_unique<DelphesFormula>();
 }
 
 //------------------------------------------------------------------------------
 
 Efficiency::~Efficiency()
 {
-  if(fFormula) delete fFormula;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +74,7 @@ void Efficiency::Init()
   // import input array
 
   fInputArray = ImportArray(GetString("InputArray", "ParticlePropagator/stableParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // switch to compute efficiency based on momentum vector eta, phi
   fUseMomentumVector = GetBool("UseMomentumVector", false);
@@ -89,7 +88,6 @@ void Efficiency::Init()
 
 void Efficiency::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------
@@ -99,7 +97,6 @@ void Efficiency::Process()
   Candidate *candidate;
   Double_t pt, eta, phi, e;
 
-
   fItInputArray->Reset();
   while((candidate = static_cast<Candidate *>(fItInputArray->Next())))
   {
@@ -108,7 +105,8 @@ void Efficiency::Process()
     eta = candidatePosition.Eta();
     phi = candidatePosition.Phi();
 
-    if (fUseMomentumVector){
+    if(fUseMomentumVector)
+    {
       eta = candidateMomentum.Eta();
       phi = candidateMomentum.Phi();
     }

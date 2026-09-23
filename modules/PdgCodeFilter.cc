@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,8 +52,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-PdgCodeFilter::PdgCodeFilter() :
-  fItInputArray(0)
+PdgCodeFilter::PdgCodeFilter()
 {
 }
 
@@ -86,7 +86,7 @@ void PdgCodeFilter::Init()
 
   // import input array
   fInputArray = ImportArray(GetString("InputArray", "Delphes/allParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   param = GetParam("PdgCode");
   size = param.GetSize();
@@ -107,7 +107,6 @@ void PdgCodeFilter::Init()
 
 void PdgCodeFilter::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------

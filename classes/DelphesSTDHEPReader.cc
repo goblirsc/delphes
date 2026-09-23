@@ -30,10 +30,10 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <errno.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
@@ -49,12 +49,12 @@
 
 using namespace std;
 
-static const int kBufferSize = 1000000;
+static const uint32_t kBufferSize = 1000000;
 
 //---------------------------------------------------------------------------
 
 DelphesSTDHEPReader::DelphesSTDHEPReader() :
-  fInputFile(0), fBuffer(0), fPDG(0), fBlockType(-1)
+  fInputFile(0), fIsOwner(false), fBuffer(0), fPDG(0), fBlockType(-1)
 {
   fBuffer = new uint8_t[kBufferSize * 96 + 24];
 
@@ -65,7 +65,39 @@ DelphesSTDHEPReader::DelphesSTDHEPReader() :
 
 DelphesSTDHEPReader::~DelphesSTDHEPReader()
 {
-  if(fBuffer) delete fBuffer;
+  if(fBuffer) delete[] fBuffer;
+  CloseInputFile();
+}
+
+//---------------------------------------------------------------------------
+
+void DelphesSTDHEPReader::OpenInputFile(const char *inputFileName)
+{
+  FILE *inputFile;
+  stringstream message;
+
+  inputFile = fopen(inputFileName, "rb");
+
+  if(inputFile == NULL)
+  {
+    message << "can't open " << inputFileName;
+    throw runtime_error(message.str());
+  }
+
+  SetInputFile(inputFile);
+  fIsOwner = true;
+}
+
+//---------------------------------------------------------------------------
+
+void DelphesSTDHEPReader::CloseInputFile()
+{
+  if(fInputFile && fIsOwner)
+  {
+    fclose(fInputFile);
+    fInputFile = 0;
+    fIsOwner = false;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -78,7 +110,7 @@ void DelphesSTDHEPReader::SetInputFile(FILE *inputFile)
 
 //---------------------------------------------------------------------------
 
-void DelphesSTDHEPReader::Clear()
+void DelphesSTDHEPReader::Clear(Option_t * /*option*/)
 {
   fBlockType = -1;
 }
@@ -92,49 +124,52 @@ bool DelphesSTDHEPReader::EventReady()
 
 //---------------------------------------------------------------------------
 
-bool DelphesSTDHEPReader::ReadBlock(DelphesFactory *factory,
+bool DelphesSTDHEPReader::ReadEvent(DelphesFactory *factory,
   TObjArray *allParticleOutputArray,
   TObjArray *stableParticleOutputArray,
   TObjArray *partonOutputArray)
 {
-  fReader[0].ReadValue(&fBlockType, 4);
+  while(!EventReady())
+  {
+    fReader[0].ReadValue(&fBlockType, 4);
 
-  if(feof(fInputFile)) return kFALSE;
+    if(feof(fInputFile)) return kFALSE;
 
-  SkipBytes(4);
+    SkipBytes(4);
 
-  if(fBlockType == FILEHEADER)
-  {
-    ReadFileHeader();
-  }
-  else if(fBlockType == EVENTTABLE)
-  {
-    ReadEventTable();
-  }
-  else if(fBlockType == EVENTHEADER)
-  {
-    ReadEventHeader();
-  }
-  else if(fBlockType == MCFIO_STDHEPBEG || fBlockType == MCFIO_STDHEPEND)
-  {
-    ReadSTDCM1();
-  }
-  else if(fBlockType == MCFIO_STDHEP)
-  {
-    ReadSTDHEP();
-    AnalyzeParticles(factory, allParticleOutputArray,
-      stableParticleOutputArray, partonOutputArray);
-  }
-  else if(fBlockType == MCFIO_STDHEP4)
-  {
-    ReadSTDHEP();
-    AnalyzeParticles(factory, allParticleOutputArray,
-      stableParticleOutputArray, partonOutputArray);
-    ReadSTDHEP4();
-  }
-  else
-  {
-    throw runtime_error("Unsupported block type.");
+    if(fBlockType == FILEHEADER)
+    {
+      ReadFileHeader();
+    }
+    else if(fBlockType == EVENTTABLE)
+    {
+      ReadEventTable();
+    }
+    else if(fBlockType == EVENTHEADER)
+    {
+      ReadEventHeader();
+    }
+    else if(fBlockType == MCFIO_STDHEPBEG || fBlockType == MCFIO_STDHEPEND)
+    {
+      ReadSTDCM1();
+    }
+    else if(fBlockType == MCFIO_STDHEP)
+    {
+      ReadSTDHEP();
+      AnalyzeParticles(factory, allParticleOutputArray,
+        stableParticleOutputArray, partonOutputArray);
+    }
+    else if(fBlockType == MCFIO_STDHEP4)
+    {
+      ReadSTDHEP();
+      AnalyzeParticles(factory, allParticleOutputArray,
+        stableParticleOutputArray, partonOutputArray);
+      ReadSTDHEP4();
+    }
+    else
+    {
+      throw runtime_error("Unsupported block type.");
+    }
   }
 
   return kTRUE;
@@ -142,10 +177,10 @@ bool DelphesSTDHEPReader::ReadBlock(DelphesFactory *factory,
 
 //---------------------------------------------------------------------------
 
-void DelphesSTDHEPReader::SkipBytes(int size)
+void DelphesSTDHEPReader::SkipBytes(uint32_t size)
 {
   int rc;
-  int rndup;
+  uint32_t rndup;
 
   rndup = size % 4;
   if(rndup > 0)
@@ -163,7 +198,7 @@ void DelphesSTDHEPReader::SkipBytes(int size)
 
 //---------------------------------------------------------------------------
 
-void DelphesSTDHEPReader::SkipArray(int elsize)
+void DelphesSTDHEPReader::SkipArray(uint32_t elsize)
 {
   uint32_t size;
   fReader[0].ReadValue(&size, 4);
@@ -279,7 +314,7 @@ void DelphesSTDHEPReader::ReadEventTable()
 void DelphesSTDHEPReader::ReadEventHeader()
 {
   bool skipNTuples = false;
-  int skipSize = 4;
+  uint32_t skipSize = 4;
 
   // version
   fReader[0].ReadString(fBuffer, 100);
@@ -387,10 +422,9 @@ void DelphesSTDHEPReader::ReadSTDHEP()
   fReader[5].ReadValue(&phepSize, 4);
   fReader[6].ReadValue(&vhepSize, 4);
 
-  if(fEventSize < 0 ||
-     fEventSize != (int)idhepSize      || fEventSize != (int)isthepSize     ||
-     (2*fEventSize) != (int)jmohepSize || (2*fEventSize) != (int)jdahepSize ||
-     (5*fEventSize) != (int)phepSize   || (4*fEventSize) != (int)vhepSize)
+  if(fEventSize != idhepSize      || fEventSize != isthepSize     ||
+     (2*fEventSize) != jmohepSize || (2*fEventSize) != jdahepSize ||
+     (5*fEventSize) != phepSize   || (4*fEventSize) != vhepSize)
   {
     throw runtime_error("Inconsistent size of arrays. File is probably corrupted.");
   }
@@ -419,6 +453,10 @@ void DelphesSTDHEPReader::ReadSTDHEP4()
 
   // Extracting the event scale
   fReader[0].ReadValue(&fScaleSize, 4);
+  if(fScaleSize > 10)
+  {
+    throw runtime_error("too many scales in event");
+  }
   for(number = 0; number < fScaleSize; ++number)
   {
     fReader[0].ReadValue(&fScale[number], 8);
@@ -448,8 +486,14 @@ void DelphesSTDHEPReader::AnalyzeEvent(ExRootTreeBranch *branch, long long /*eve
   element->AlphaQED = fAlphaQED;
   element->AlphaQCD = fAlphaQCD;
 
-  element->ReadTime = readStopWatch->RealTime();
-  element->ProcTime = procStopWatch->RealTime();
+  element->ReadTime = readStopWatch ? readStopWatch->RealTime() : 0;
+  element->ProcTime = procStopWatch ? procStopWatch->RealTime() : 0;
+}
+
+//---------------------------------------------------------------------------
+
+void DelphesSTDHEPReader::AnalyzeWeight(ExRootTreeBranch *branch)
+{
 }
 
 //---------------------------------------------------------------------------
@@ -463,7 +507,7 @@ void DelphesSTDHEPReader::AnalyzeParticles(DelphesFactory *factory,
   TParticlePDG *pdgParticle;
   int pdgCode;
 
-  int number;
+  uint32_t number;
   int32_t pid, status, m1, m2, d1, d2;
   double px, py, pz, e, mass;
   double x, y, z, t;

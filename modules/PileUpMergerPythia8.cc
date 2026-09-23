@@ -47,6 +47,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -54,17 +55,15 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-PileUpMergerPythia8::PileUpMergerPythia8() :
-  fFunction(0), fPythia(0), fItInputArray(0)
+PileUpMergerPythia8::PileUpMergerPythia8()
 {
-  fFunction = new DelphesTF2;
+  fFunction = make_unique<DelphesTF2>();
 }
 
 //------------------------------------------------------------------------------
 
 PileUpMergerPythia8::~PileUpMergerPythia8()
 {
-  delete fFunction;
 }
 
 //------------------------------------------------------------------------------
@@ -87,16 +86,17 @@ void PileUpMergerPythia8::Init()
 
   fPTMin = GetDouble("PTMin", 0.0);
 
-  fFunction->Compile(GetString("VertexDistributionFormula", "0.0"));
+  fFunction->Compile(GetString("VertexD", "0.0"));
   fFunction->SetRange(-fZVertexSpread, -fTVertexSpread, fZVertexSpread, fTVertexSpread);
 
   fileName = GetString("ConfigFile", "MinBias.cmnd");
-  fPythia = new Pythia8::Pythia();
+  fPythia = make_unique<Pythia8::Pythia>();
   fPythia->readFile(fileName);
+  fPythia->init();
 
   // import input array
   fInputArray = ImportArray(GetString("InputArray", "Delphes/stableParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output arrays
   fParticleOutputArray = ExportArray(GetString("ParticleOutputArray", "stableParticles"));
@@ -107,7 +107,6 @@ void PileUpMergerPythia8::Init()
 
 void PileUpMergerPythia8::Finish()
 {
-  if(fPythia) delete fPythia;
 }
 
 //------------------------------------------------------------------------------
@@ -116,7 +115,7 @@ void PileUpMergerPythia8::Process()
 {
   TDatabasePDG *pdg = TDatabasePDG::Instance();
   TParticlePDG *pdgParticle;
-  Int_t pid, status;
+  Int_t pid, status, vn;
   Float_t x, y, z, t, vx, vy;
   Float_t px, py, pz, e;
   Double_t dz, dphi, dt;
@@ -177,8 +176,7 @@ void PileUpMergerPythia8::Process()
 
   for(event = 0; event < numberOfEvents; ++event)
   {
-    while(!fPythia->next())
-      ;
+    while(!fPythia->next());
 
     // --- Pile-up vertex smearing
 
@@ -191,6 +189,7 @@ void PileUpMergerPythia8::Process()
 
     vx = 0.0;
     vy = 0.0;
+    vn = 0;
     numberOfParticles = fPythia->event.size();
     for(i = 1; i < numberOfParticles; ++i)
     {
@@ -233,14 +232,15 @@ void PileUpMergerPythia8::Process()
 
       vx += candidate->Position.X();
       vy += candidate->Position.Y();
+      ++vn;
 
       fParticleOutputArray->Add(candidate);
     }
 
-    if(numberOfParticles > 0)
+    if(vn > 0)
     {
-      vx /= numberOfParticles;
-      vy /= numberOfParticles;
+      vx /= vn;
+      vy /= vn;
     }
 
     vertex = factory->NewCandidate();

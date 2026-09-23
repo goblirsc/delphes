@@ -31,6 +31,7 @@
 #include "classes/DelphesModule.h"
 
 #include <deque>
+#include <memory>
 
 class TObjArray;
 class TH2F;
@@ -46,16 +47,15 @@ public:
   void Finish();
 
 private:
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  TIterator *fItInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  const TObjArray *fInputArray; //!
-
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   Bool_t fUseMomentumVector; // !
-  TH2F *fHisto; //!
-  
+  std::unique_ptr<TH2F> fHisto; //!
+
   ClassDef(ParticleDensity, 1)
 };
 

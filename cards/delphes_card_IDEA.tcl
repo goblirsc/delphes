@@ -29,6 +29,8 @@ set DCHRMAX 2.02
 
 set ExecutionPath {
 
+  BeamSpotSmearing
+
   TruthVertexFinder
   ParticlePropagator
 
@@ -87,6 +89,23 @@ set ExecutionPath {
 }
 
 #################################
+# Beam spot smearing
+#################################
+
+module BeamSpotSmearing BeamSpotSmearing {
+
+  set InputArray Delphes/allParticles
+
+  # beam spot size in x, y, z [m] and bunch time spread [s]
+  # FCC-ee Z pole example: 5.96E-06, 23.8E-09, 0.397E-03, 36.3E-12
+  set SigmaX 0.0
+  set SigmaY 0.0
+  set SigmaZ 0.0
+  set SigmaT 0.0
+}
+
+
+#################################
 # Truth Vertex Finder
 #################################
 
@@ -113,13 +132,13 @@ module ParticlePropagator ParticlePropagator {
   set MuonOutputArray muons
 
   # inner radius of the solenoid, in m
-  set Radius $R
+  set Radius $::R
 
   # half-length: z of the solenoid, in m
-  set HalfLength $HL
+  set HalfLength $::HL
 
   # magnetic field, in T
-  set Bz $B
+  set Bz $::B
 }
 
 ####################################
@@ -200,7 +219,7 @@ module TrackCovariance TrackSmearing {
     set NMinHits 6
 
     ## magnetic field
-    set Bz $B
+    set Bz $::B
 
     ## scale factors
     set ElectronScaleFactor  {1.25}
@@ -382,13 +401,13 @@ module ClusterCounting ClusterCounting {
   add InputArray TrackSmearing/tracks
   set OutputArray tracks
 
-  set Bz $B
+  set Bz $::B
 
   ## check that these are consistent with DCHCANI/DCHNANO parameters in TrackCovariance module
-  set Rmin $DCHRMIN
-  set Rmax $DCHRMAX
-  set Zmin $DCHZMIN
-  set Zmax $DCHZMAX
+  set Rmin $::DCHRMIN
+  set Rmax $::DCHRMAX
+  set Zmin $::DCHZMIN
+  set Zmax $::DCHZMAX
 
   # gas mix option:
   # 0:  Helium 90% - Isobutane 10%
@@ -451,7 +470,7 @@ module Merger TrackMerger {
 module Efficiency ForwardLooperTracks  {
   set InputArray TrackMerger/tracks
   set OutputArray tracks
-  set UseMomentumVector False
+  set UseMomentumVector false
 
   ## select looping tracks that end up in position |eta| > 3.142 (lost by calo)
   set EfficiencyFormula {
@@ -466,23 +485,44 @@ module Efficiency ForwardLooperTracks  {
 # Calorimeter
 #############
 module DualReadoutCalorimeter Calorimeter {
-  set ParticleInputArray ParticlePropagator/stableParticles
-  set TrackInputArray TrackMerger/tracks
+    set ParticleInputArray ParticlePropagator/stableParticles
+    set TrackInputArray TrackMerger/tracks
 
-  set TowerOutputArray towers
-  set PhotonOutputArray photons
+    set TowerOutputArray towers
+    set PhotonOutputArray photons
 
-  set EFlowTrackOutputArray eflowTracks
-  set EFlowPhotonOutputArray eflowPhotons
-  set EFlowNeutralHadronOutputArray eflowNeutralHadrons
+    set EFlowTrackOutputArray eflowTracks
+    set EFlowPhotonOutputArray eflowPhotons
+    set EFlowNeutralHadronOutputArray eflowNeutralHadrons
 
-  set ECalMinSignificance 2.0
-  set HCalMinSignificance 2.5
+    set ECalMinSignificance 2.0
+    set HCalMinSignificance 2.5
 
-  set SmearLogNormal false
+    set SmearLogNormal false
 
-  set SmearTowerCenter true
-  #set SmearTowerCenter false
+    set SmearTowerCenter true
+    #set SmearTowerCenter false
+
+    set PhotonAngularSmearing true
+
+    set PhotonThetaResolutionFormula {
+      (abs(eta) <= 0.88)                   * sqrt(0.78^2/energy + 0.68^2/energy^2 + 0.07^2)*1E-3 +
+      (abs(eta) > 0.88 && abs(eta) <= 3.0) * sqrt(0.73^2/energy + 0.10^2)*1E-3
+    }
+
+    set PhotonPhiResolutionFormula {
+      (abs(eta) <= 0.88)                   * sqrt(0.85^2/energy + 1.20^2/energy^2 + 0.12^2)*1E-3 +
+      (abs(eta) > 0.88 && abs(eta) <= 3.0) * sqrt(1.62^2/energy + (0.18 + 0.06*abs(eta)^2.98)^2)*1E-3
+    }
+
+    set PhotonPointing true
+
+    set PointingThetaResolutionFormula { (abs(eta) <= 3.0) * sqrt(111.9^2/energy + 21.0^2)*1E-3 }
+    set PointingPhiResolutionFormula   { (abs(eta) <= 3.0) * sqrt(139.4^2/energy + 23.8^2)*1E-3 }
+
+    ## alternative optimistic pointing BDT-corrected
+    # set PointingThetaResolutionFormula { (abs(eta) <= 3.0) * sqrt(51.76^2/energy + 11.67^2)*1E-3 }
+    # set PointingPhiResolutionFormula   { (abs(eta) <= 3.0) * sqrt(75.76^2/energy + 73.66^2/energy^2 + 16.73^2)*1E-3 }
     set pi [expr {acos(-1)}]
 
     # Lists of the edges of each tower in eta and phi;
@@ -497,13 +537,7 @@ module DualReadoutCalorimeter Calorimeter {
 
     set pi [expr {acos(-1)}]
 
-    set nbins_phi [expr {$pi/$EtaPhiRes} ]
-    set nbins_phi [expr {int($nbins_phi)} ]
-
-    set PhiBins {}
-    for {set i -$nbins_phi} {$i <= $nbins_phi} {incr i} {
-      add PhiBins [expr {$i * $pi/$nbins_phi}]
-    }
+    set PhiBins [expr {int($pi/$EtaPhiRes) * 2}]
 
     set nbins_eta [expr {$EtaMax/$EtaPhiRes} ]
     set nbins_eta [expr {int($nbins_eta)} ]
@@ -1004,5 +1038,5 @@ module TreeWriter TreeWriter {
     add Branch FastJetFinderDurhamN2/jets JetDurhamN2 Jet
 
     # add Info InfoName InfoValue
-    add Info Bz $B
+    add Info Bz $::B
 }

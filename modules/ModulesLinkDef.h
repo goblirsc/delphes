@@ -52,6 +52,7 @@
 #include "modules/UniqueObjectFinder.h"
 #include "modules/TrackCountingBTagging.h"
 #include "modules/BTagging.h"
+#include "modules/BoostedTagging.h"
 #include "modules/TauTagging.h"
 #include "modules/TrackCountingTauTagging.h"
 #include "modules/TreeWriter.h"
@@ -67,6 +68,7 @@
 #include "modules/StatusPidFilter.h"
 #include "modules/PdgCodeFilter.h"
 #include "modules/BeamSpotFilter.h"
+#include "modules/BeamSpotSmearing.h"
 #include "modules/RecoPuFilter.h"
 #include "modules/Cloner.h"
 #include "modules/Weighter.h"
@@ -117,6 +119,7 @@
 #pragma link C++ class UniqueObjectFinder+;
 #pragma link C++ class TrackCountingBTagging+;
 #pragma link C++ class BTagging+;
+#pragma link C++ class BoostedTagging+;
 #pragma link C++ class TauTagging+;
 #pragma link C++ class TrackCountingTauTagging+;
 #pragma link C++ class TreeWriter+;
@@ -132,6 +135,7 @@
 #pragma link C++ class StatusPidFilter+;
 #pragma link C++ class PdgCodeFilter+;
 #pragma link C++ class BeamSpotFilter+;
+#pragma link C++ class BeamSpotSmearing+;
 #pragma link C++ class RecoPuFilter+;
 #pragma link C++ class Cloner+;
 #pragma link C++ class Weighter+;

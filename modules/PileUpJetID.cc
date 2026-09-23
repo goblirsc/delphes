@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -34,8 +35,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-PileUpJetID::PileUpJetID() :
-  fItJetInputArray(0), fTrackInputArray(0), fNeutralInputArray(0)
+PileUpJetID::PileUpJetID()
 {
 }
 
@@ -67,13 +67,13 @@ void PileUpJetID::Init()
   // import input array(s)
 
   fJetInputArray = ImportArray(GetString("JetInputArray", "FastJetFinder/jets"));
-  fItJetInputArray = fJetInputArray->MakeIterator();
+  fItJetInputArray.reset(fJetInputArray->MakeIterator());
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "ParticlePropagator/tracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   fNeutralInputArray = ImportArray(GetString("NeutralInputArray", "ParticlePropagator/tracks"));
-  fItNeutralInputArray = fNeutralInputArray->MakeIterator();
+  fItNeutralInputArray.reset(fNeutralInputArray->MakeIterator());
 
   // create output array(s)
 
@@ -87,10 +87,6 @@ void PileUpJetID::Init()
 void PileUpJetID::Finish()
 {
   //  cout << "In finish" << endl;
-
-  if(fItJetInputArray) delete fItJetInputArray;
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  if(fItNeutralInputArray) delete fItNeutralInputArray;
 }
 
 //------------------------------------------------------------------------------

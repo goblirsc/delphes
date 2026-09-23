@@ -29,6 +29,8 @@
 
 #include "classes/DelphesModule.h"
 
+#include <memory>
+
 class TObjArray;
 class DelphesPileUpReader;
 class DelphesTF2;
@@ -55,16 +57,16 @@ private:
   Double_t fOutputBeamSpotX;
   Double_t fOutputBeamSpotY;
 
-  DelphesTF2 *fFunction; //!
+  std::unique_ptr<DelphesTF2> fFunction; //!
 
-  DelphesPileUpReader *fReader; //!
+  std::unique_ptr<DelphesPileUpReader> fReader; //!
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
 
-  TObjArray *fParticleOutputArray; //!
-  TObjArray *fVertexOutputArray; //!
+  TObjArray *fParticleOutputArray = nullptr; //!
+  TObjArray *fVertexOutputArray = nullptr; //!
 
   ClassDef(PileUpMerger, 1)
 };

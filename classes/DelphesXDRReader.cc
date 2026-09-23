@@ -26,9 +26,9 @@
 
 #include "classes/DelphesXDRReader.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 
 //------------------------------------------------------------------------------
 
@@ -54,16 +54,16 @@ void DelphesXDRReader::SetBuffer(void *buffer)
 
 //------------------------------------------------------------------------------
 
-void DelphesXDRReader::SetOffset(int offset)
+void DelphesXDRReader::SetOffset(uint32_t offset)
 {
   fOffset = offset;
 }
 
 //------------------------------------------------------------------------------
 
-void DelphesXDRReader::ReadRaw(void *value, int size)
+void DelphesXDRReader::ReadRaw(void *value, uint32_t size)
 {
-  int rndup;
+  uint32_t rndup;
 
   rndup = size % 4;
   if(rndup > 0)
@@ -79,9 +79,9 @@ void DelphesXDRReader::ReadRaw(void *value, int size)
 
 //------------------------------------------------------------------------------
 
-void DelphesXDRReader::ReadValue(void *value, int size)
+void DelphesXDRReader::ReadValue(void *value, uint32_t size)
 {
-  int i;
+  uint32_t i;
   uint8_t *dst, buffer[8];
 
   dst = (uint8_t *)value;
@@ -100,9 +100,9 @@ void DelphesXDRReader::ReadValue(void *value, int size)
 
 //------------------------------------------------------------------------------
 
-void DelphesXDRReader::ReadString(void *value, int maxSize)
+void DelphesXDRReader::ReadString(void *value, uint32_t maxSize)
 {
-  int32_t size;
+  uint32_t size;
 
   ReadValue(&size, 4);
 

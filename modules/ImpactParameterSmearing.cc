@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,17 +52,15 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-ImpactParameterSmearing::ImpactParameterSmearing() :
-  fFormula(0), fItInputArray(0)
+ImpactParameterSmearing::ImpactParameterSmearing()
 {
-  fFormula = new DelphesFormula;
+  fFormula = make_unique<DelphesFormula>();
 }
 
 //------------------------------------------------------------------------------
 
 ImpactParameterSmearing::~ImpactParameterSmearing()
 {
-  if(fFormula) delete fFormula;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +74,7 @@ void ImpactParameterSmearing::Init()
   // import input array
 
   fInputArray = ImportArray(GetString("InputArray", "TrackMerger/tracks"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array
 
@@ -86,7 +85,6 @@ void ImpactParameterSmearing::Init()
 
 void ImpactParameterSmearing::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------

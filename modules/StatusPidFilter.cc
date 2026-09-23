@@ -45,6 +45,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -145,8 +146,7 @@ bool isWDaughter(int M1, const TObjArray *fInputArray)
 
 //------------------------------------------------------------------------------
 
-StatusPidFilter::StatusPidFilter() :
-  fItInputArray(0)
+StatusPidFilter::StatusPidFilter()
 {
 }
 
@@ -168,7 +168,7 @@ void StatusPidFilter::Init()
 
   // import input array
   fInputArray = ImportArray(GetString("InputArray", "Delphes/allParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array
 
@@ -179,7 +179,6 @@ void StatusPidFilter::Init()
 
 void StatusPidFilter::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------

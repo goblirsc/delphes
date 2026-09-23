@@ -115,38 +115,37 @@ TMatrixDSym Track::CovarianceMatrix() const
   Cv.ResizeTo(5, 5);
 
   // convert diagonal term to original units
-  Cv(0, 0)=TMath::Power(ErrorD0, 2.);
-  Cv(1, 1)=TMath::Power(ErrorPhi, 2.);
-  Cv(2, 2)=TMath::Power(ErrorC, 2.);
-  Cv(3, 3)=TMath::Power(ErrorDZ, 2.);
-  Cv(4, 4)=TMath::Power(ErrorCtgTheta, 2.);
+  Cv(0, 0) = TMath::Power(ErrorD0, 2.);
+  Cv(1, 1) = TMath::Power(ErrorPhi, 2.);
+  Cv(2, 2) = TMath::Power(ErrorC, 2.);
+  Cv(3, 3) = TMath::Power(ErrorDZ, 2.);
+  Cv(4, 4) = TMath::Power(ErrorCtgTheta, 2.);
 
   // off diagonal terms
-  Cv(0, 1)=ErrorD0Phi;
-  Cv(0, 2)=ErrorD0C;
-  Cv(0, 3)=ErrorD0DZ;
-  Cv(0, 4)=ErrorD0CtgTheta;
-  Cv(1, 2)=ErrorPhiC;
-  Cv(1, 3)=ErrorPhiDZ;
-  Cv(1, 4)=ErrorPhiCtgTheta;
-  Cv(2, 3)=ErrorCDZ;
-  Cv(2, 4)=ErrorCCtgTheta;
-  Cv(3, 4)=ErrorDZCtgTheta;
+  Cv(0, 1) = ErrorD0Phi;
+  Cv(0, 2) = ErrorD0C;
+  Cv(0, 3) = ErrorD0DZ;
+  Cv(0, 4) = ErrorD0CtgTheta;
+  Cv(1, 2) = ErrorPhiC;
+  Cv(1, 3) = ErrorPhiDZ;
+  Cv(1, 4) = ErrorPhiCtgTheta;
+  Cv(2, 3) = ErrorCDZ;
+  Cv(2, 4) = ErrorCCtgTheta;
+  Cv(3, 4) = ErrorDZCtgTheta;
 
-  Cv(1, 0)=Cv(0, 1);
-  Cv(2, 0)=Cv(0, 2);
-  Cv(3, 0)=Cv(0, 3);
-  Cv(4, 0)=Cv(0, 4);
-  Cv(2, 1)=Cv(1, 2);
-  Cv(3, 1)=Cv(1, 3);
-  Cv(4, 1)=Cv(1, 4);
-  Cv(3, 2)=Cv(2, 3);
-  Cv(4, 2)=Cv(2, 4);
-  Cv(4, 3)=Cv(3, 4);
+  Cv(1, 0) = Cv(0, 1);
+  Cv(2, 0) = Cv(0, 2);
+  Cv(3, 0) = Cv(0, 3);
+  Cv(4, 0) = Cv(0, 4);
+  Cv(2, 1) = Cv(1, 2);
+  Cv(3, 1) = Cv(1, 3);
+  Cv(4, 1) = Cv(1, 4);
+  Cv(3, 2) = Cv(2, 3);
+  Cv(4, 2) = Cv(2, 4);
+  Cv(4, 3) = Cv(3, 4);
 
   return Cv;
 }
-
 
 //------------------------------------------------------------------------------
 
@@ -174,34 +173,34 @@ TMatrixDSym ParticleFlowCandidate::CovarianceMatrix() const
   Cv.ResizeTo(5, 5);
 
   // convert diagonal term to original units
-  Cv(0, 0)=TMath::Power(ErrorD0, 2.);
-  Cv(1, 1)=TMath::Power(ErrorPhi, 2.);
-  Cv(2, 2)=TMath::Power(ErrorC, 2.);
-  Cv(3, 3)=TMath::Power(ErrorDZ, 2.);
-  Cv(4, 4)=TMath::Power(ErrorCtgTheta, 2.);
+  Cv(0, 0) = TMath::Power(ErrorD0, 2.);
+  Cv(1, 1) = TMath::Power(ErrorPhi, 2.);
+  Cv(2, 2) = TMath::Power(ErrorC, 2.);
+  Cv(3, 3) = TMath::Power(ErrorDZ, 2.);
+  Cv(4, 4) = TMath::Power(ErrorCtgTheta, 2.);
 
   // off diagonal terms
-  Cv(0, 1)=ErrorD0Phi;
-  Cv(0, 2)=ErrorD0C;
-  Cv(0, 3)=ErrorD0DZ;
-  Cv(0, 4)=ErrorD0CtgTheta;
-  Cv(1, 2)=ErrorPhiC;
-  Cv(1, 3)=ErrorPhiDZ;
-  Cv(1, 4)=ErrorPhiCtgTheta;
-  Cv(2, 3)=ErrorCDZ;
-  Cv(2, 4)=ErrorCCtgTheta;
-  Cv(3, 4)=ErrorDZCtgTheta;
+  Cv(0, 1) = ErrorD0Phi;
+  Cv(0, 2) = ErrorD0C;
+  Cv(0, 3) = ErrorD0DZ;
+  Cv(0, 4) = ErrorD0CtgTheta;
+  Cv(1, 2) = ErrorPhiC;
+  Cv(1, 3) = ErrorPhiDZ;
+  Cv(1, 4) = ErrorPhiCtgTheta;
+  Cv(2, 3) = ErrorCDZ;
+  Cv(2, 4) = ErrorCCtgTheta;
+  Cv(3, 4) = ErrorDZCtgTheta;
 
-  Cv(1, 0)=Cv(0, 1);
-  Cv(2, 0)=Cv(0, 2);
-  Cv(3, 0)=Cv(0, 3);
-  Cv(4, 0)=Cv(0, 4);
-  Cv(2, 1)=Cv(1, 2);
-  Cv(3, 1)=Cv(1, 3);
-  Cv(4, 1)=Cv(1, 4);
-  Cv(3, 2)=Cv(2, 3);
-  Cv(4, 2)=Cv(2, 4);
-  Cv(4, 3)=Cv(3, 4);
+  Cv(1, 0) = Cv(0, 1);
+  Cv(2, 0) = Cv(0, 2);
+  Cv(3, 0) = Cv(0, 3);
+  Cv(4, 0) = Cv(0, 4);
+  Cv(2, 1) = Cv(1, 2);
+  Cv(3, 1) = Cv(1, 3);
+  Cv(4, 1) = Cv(1, 4);
+  Cv(3, 2) = Cv(2, 3);
+  Cv(4, 2) = Cv(2, 4);
+  Cv(4, 3) = Cv(3, 4);
 
   return Cv;
 }
@@ -214,7 +213,7 @@ Candidate::Candidate() :
   IsPU(0), IsRecoPU(0), IsConstituent(0), IsFromConversion(0),
   Flavor(0), FlavorAlgo(0), FlavorPhys(0), TauFlavor(0),
   BTag(0), BTagAlgo(0), BTagPhys(0),
-  TauTag(0), TauWeight(0.0), Eem(0.0), Ehad(0.0), Etrk(0.0),
+  TauTag(0), TauWeight(0.0), BoostedTag(0), Eem(0.0), Ehad(0.0), Etrk(0.0),
   DeltaEta(0.0), DeltaPhi(0.0),
   Momentum(0.0, 0.0, 0.0, 0.0),
   Position(0.0, 0.0, 0.0, 0.0),
@@ -241,8 +240,8 @@ Candidate::Candidate() :
   BetaStar(0),
   MeanSqDeltaR(0),
   PTD(0),
-  NeutralEnergyFraction(0),  // neutral energy fraction
-  ChargedEnergyFraction(0),  // charged energy fraction
+  NeutralEnergyFraction(0), // neutral energy fraction
+  ChargedEnergyFraction(0), // charged energy fraction
   NTimeHits(-1),
   IsolationVar(-999),
   IsolationVarRhoCorr(-999),
@@ -381,6 +380,7 @@ void Candidate::Copy(TObject &obj) const
   object.BTagPhys = BTagPhys;
   object.TauTag = TauTag;
   object.TauWeight = TauWeight;
+  object.BoostedTag = BoostedTag;
   object.Eem = Eem;
   object.Ehad = Ehad;
   object.Etrk = Etrk;
@@ -480,7 +480,12 @@ void Candidate::Copy(TObject &obj) const
   object.SoftDroppedJet = SoftDroppedJet;
   object.SoftDroppedSubJet1 = SoftDroppedSubJet1;
   object.SoftDroppedSubJet2 = SoftDroppedSubJet2;
+  if(TrackCovariance.GetNrows() != object.TrackCovariance.GetNrows())
+  {
+    object.TrackCovariance.ResizeTo(TrackCovariance.GetNrows(), TrackCovariance.GetNrows());
+  }
   object.TrackCovariance = TrackCovariance;
+  object.ParticleDensity = ParticleDensity;
   object.fFactory = fFactory;
   object.fArray = 0;
 
@@ -526,6 +531,7 @@ void Candidate::Clear(Option_t * /*option*/)
   BTagPhys = 0;
   TauTag = 0;
   TauWeight = 0.0;
+  BoostedTag = 0;
   Eem = 0.0;
   Ehad = 0.0;
   Etrk = 0.0;
@@ -538,6 +544,7 @@ void Candidate::Clear(Option_t * /*option*/)
   Momentum.SetXYZT(0.0, 0.0, 0.0, 0.0);
   Position.SetXYZT(0.0, 0.0, 0.0, 0.0);
   InitialPosition.SetXYZT(0.0, 0.0, 0.0, 0.0);
+  PositionError.SetXYZT(0.0, 0.0, 0.0, 0.0);
   DecayPosition.SetXYZT(0.0, 0.0, 0.0, 0.0);
   Area.SetXYZT(0.0, 0.0, 0.0, 0.0);
   TrackCovariance.Zero();
@@ -612,7 +619,6 @@ void Candidate::Clear(Option_t * /*option*/)
   ExclYmerge45 = 0.0;
   ExclYmerge56 = 0.0;
   ParticleDensity = 0.0;
-
 
   for(i = 0; i < 5; ++i)
   {

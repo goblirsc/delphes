@@ -31,6 +31,7 @@
  */
 
 #include "classes/DelphesModule.h"
+#include <memory>
 
 class TClonesArray;
 class TIterator;
@@ -50,16 +51,16 @@ private:
   Double_t fRadius, fRadius2, fRadiusMax, fHalfLength, fHalfLengthMax;
   Double_t fBz;
 
-  TIterator *fItInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
 
-  const TObjArray *fInputArray; //!
-  const TObjArray *fBeamSpotInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
+  const TObjArray *fBeamSpotInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
-  TObjArray *fNeutralOutputArray; //!
-  TObjArray *fChargedHadronOutputArray; //!
-  TObjArray *fElectronOutputArray; //!
-  TObjArray *fMuonOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
+  TObjArray *fNeutralOutputArray = nullptr; //!
+  TObjArray *fChargedHadronOutputArray = nullptr; //!
+  TObjArray *fElectronOutputArray = nullptr; //!
+  TObjArray *fMuonOutputArray = nullptr; //!
 
   ClassDef(ParticlePropagator, 1)
 };

@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -46,8 +47,7 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-TrackCountingBTagging::TrackCountingBTagging() :
-  fItTrackInputArray(0), fItJetInputArray(0)
+TrackCountingBTagging::TrackCountingBTagging()
 {
 }
 
@@ -75,18 +75,16 @@ void TrackCountingBTagging::Init()
   // import input array(s)
 
   fTrackInputArray = ImportArray(GetString("TrackInputArray", "Calorimeter/eflowTracks"));
-  fItTrackInputArray = fTrackInputArray->MakeIterator();
+  fItTrackInputArray.reset(fTrackInputArray->MakeIterator());
 
   fJetInputArray = ImportArray(GetString("JetInputArray", "FastJetFinder/jets"));
-  fItJetInputArray = fJetInputArray->MakeIterator();
+  fItJetInputArray.reset(fJetInputArray->MakeIterator());
 }
 
 //------------------------------------------------------------------------------
 
 void TrackCountingBTagging::Finish()
 {
-  if(fItTrackInputArray) delete fItTrackInputArray;
-  if(fItJetInputArray) delete fItJetInputArray;
 }
 
 //------------------------------------------------------------------------------

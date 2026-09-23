@@ -8,19 +8,23 @@ jobs:
 
     strategy:
       matrix:
-        container: ["delphes/ubuntu:24.04", "delphes/fedora:42"]
+        container: ["delphes/alma:8", "delphes/fedora:44"]
 
     container:
       image: ${{ matrix.container }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Delphes using make
         run: |
           make distclean
           make -j 8 HAS_PYTHIA8=true
+
+      - name: Run tests
+        run: |
+          pytest tests
 
       - name: Build Delphes using cmake
         run: |

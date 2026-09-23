@@ -20,7 +20,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <signal.h>
+#include <csignal>
 
 #include "TApplication.h"
 #include "TROOT.h"
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 
     reader = new DelphesHepMC3Reader;
 
-    modularDelphes->InitTask();
+    modularDelphes->Init();
 
     i = 3;
     do
@@ -179,27 +179,24 @@ int main(int argc, char *argv[])
       modularDelphes->Clear();
       reader->Clear();
       readStopWatch.Start();
-      while((maxEvents <= 0 || eventCounter - skipEvents < maxEvents) && reader->ReadBlock(factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray) && !interrupted)
+      while((maxEvents <= 0 || eventCounter - skipEvents < maxEvents) && reader->ReadEvent(factory, allParticleOutputArray, stableParticleOutputArray, partonOutputArray) && !interrupted)
       {
-        if(reader->EventReady())
+        ++eventCounter;
+
+        readStopWatch.Stop();
+
+        if(eventCounter > skipEvents)
         {
-          ++eventCounter;
+          procStopWatch.Start();
+          modularDelphes->Process();
+          procStopWatch.Stop();
 
-          readStopWatch.Stop();
+          reader->AnalyzeEvent(branchEvent, eventCounter, &readStopWatch, &procStopWatch);
+          reader->AnalyzeWeight(branchWeight);
 
-          if(eventCounter > skipEvents)
-          {
-            procStopWatch.Start();
-            modularDelphes->ProcessTask();
-            procStopWatch.Stop();
+          treeWriter->Fill();
 
-            reader->AnalyzeEvent(branchEvent, eventCounter, &readStopWatch, &procStopWatch);
-            reader->AnalyzeWeight(branchWeight);
-
-            treeWriter->Fill();
-
-            treeWriter->Clear();
-          }
+          treeWriter->Clear();
 
           modularDelphes->Clear();
           reader->Clear();
@@ -218,7 +215,7 @@ int main(int argc, char *argv[])
       ++i;
     } while(i < argc);
 
-    modularDelphes->FinishTask();
+    modularDelphes->Finish();
     treeWriter->Write();
 
     cout << "** Exiting..." << endl;

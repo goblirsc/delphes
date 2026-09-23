@@ -33,6 +33,7 @@
 #include "classes/DelphesModule.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -54,7 +55,7 @@ private:
   typedef std::map<Long64_t, Double_t> TFractionMap; //!
   typedef std::map<Double_t, std::set<Double_t> > TBinMap; //!
 
-  Candidate *fTower;
+  Candidate *fTower = nullptr;
   Double_t fTowerEta, fTowerPhi, fTowerEdges[4];
 
   Double_t fTowerEnergy;
@@ -89,7 +90,7 @@ private:
   TBinMap fBinMap; //!
 
   std::vector<Double_t> fEtaBins;
-  std::vector<std::vector<Double_t> *> fPhiBins;
+  std::vector<std::unique_ptr<std::vector<Double_t> > > fPhiBins;
 
   std::vector<Long64_t> fTowerHits;
 
@@ -106,21 +107,21 @@ private:
     return fInsensitiveBinSet.find(std::make_pair(etaBin, phiBin)) != fInsensitiveBinSet.end();
   }
 
-  DelphesFormula *fResolutionFormula; //!
+  std::unique_ptr<DelphesFormula> fResolutionFormula; //!
 
-  TIterator *fItParticleInputArray; //!
-  TIterator *fItTrackInputArray; //!
+  std::unique_ptr<TIterator> fItParticleInputArray; //!
+  std::unique_ptr<TIterator> fItTrackInputArray; //!
 
-  const TObjArray *fParticleInputArray; //!
-  const TObjArray *fTrackInputArray; //!
+  const TObjArray *fParticleInputArray = nullptr; //!
+  const TObjArray *fTrackInputArray = nullptr; //!
 
-  TObjArray *fTowerOutputArray; //!
+  TObjArray *fTowerOutputArray = nullptr; //!
 
-  TObjArray *fEFlowTrackOutputArray; //!
-  TObjArray *fEFlowTowerOutputArray; //!
+  TObjArray *fEFlowTrackOutputArray = nullptr; //!
+  TObjArray *fEFlowTowerOutputArray = nullptr; //!
 
-  TObjArray *fTowerTrackArray; //!
-  TIterator *fItTowerTrackArray; //!
+  std::unique_ptr<TObjArray> fTowerTrackArray; //!
+  std::unique_ptr<TIterator> fItTowerTrackArray; //!
 
   void FinalizeTower();
   Double_t LogNormal(Double_t mean, Double_t sigma);

@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -51,17 +52,15 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 
-EnergySmearing::EnergySmearing() :
-  fFormula(0), fItInputArray(0)
+EnergySmearing::EnergySmearing()
 {
-  fFormula = new DelphesFormula;
+  fFormula = make_unique<DelphesFormula>();
 }
 
 //------------------------------------------------------------------------------
 
 EnergySmearing::~EnergySmearing()
 {
-  if(fFormula) delete fFormula;
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +74,7 @@ void EnergySmearing::Init()
   // import input array
 
   fInputArray = ImportArray(GetString("InputArray", "ParticlePropagator/stableParticles"));
-  fItInputArray = fInputArray->MakeIterator();
+  fItInputArray.reset(fInputArray->MakeIterator());
 
   // create output array
 
@@ -86,7 +85,6 @@ void EnergySmearing::Init()
 
 void EnergySmearing::Finish()
 {
-  if(fItInputArray) delete fItInputArray;
 }
 
 //------------------------------------------------------------------------------
@@ -117,7 +115,7 @@ void EnergySmearing::Process()
     candidate = static_cast<Candidate *>(candidate->Clone());
     eta = candidateMomentum.Eta();
     phi = candidateMomentum.Phi();
-    pt = (energy > m) ? TMath::Sqrt(energy*energy - m*m)/TMath::CosH(eta) : 0;
+    pt = (energy > m) ? TMath::Sqrt(energy * energy - m * m) / TMath::CosH(eta) : 0;
     candidate->Momentum.SetPtEtaPhiE(pt, eta, phi, energy);
     candidate->TrackResolution = fFormula->Eval(pt, eta, phi, energy) / candidateMomentum.E();
     candidate->AddCandidate(mother);

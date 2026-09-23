@@ -28,6 +28,7 @@
 */
 
 #include "classes/DelphesModule.h"
+#include <memory>
 
 class TIterator;
 class TObjArray;
@@ -44,16 +45,15 @@ public:
   void ComputeVertexMomenta();
 
 private:
-
   Int_t fVertexTimeMode;
 
-  TIterator *fItInputArray; //!
-  TIterator *fItVertexInputArray; //!
+  std::unique_ptr<TIterator> fItInputArray; //!
+  std::unique_ptr<TIterator> fItVertexInputArray; //!
 
-  const TObjArray *fInputArray; //!
-  const TObjArray *fVertexInputArray; //!
+  const TObjArray *fInputArray = nullptr; //!
+  const TObjArray *fVertexInputArray = nullptr; //!
 
-  TObjArray *fOutputArray; //!
+  TObjArray *fOutputArray = nullptr; //!
 
   ClassDef(TimeOfFlight, 1)
 };
